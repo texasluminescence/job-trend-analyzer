@@ -12,7 +12,7 @@
    ```bash
    git commit -m "Description of changes"
    git push origin feature/{jira-task-name}
-5. **Merge Branch into main**
+5. **Merge branch into main**
    ```bash
    git checkout main
    git pull origin main
