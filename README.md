@@ -10,18 +10,18 @@
 2. **Do some coding/develop the feature**
 3. **Commit/push feature**
    ```bash
-  git commit -m "Description of changes"
-  git push origin feature/{jira-task-name}
+   git commit -m "Description of changes"
+   git push origin feature/{jira-task-name}
 5. **Merge Branch into main**
-      ```bash
-  git checkout main
-  git pull origin main
-  git merge feature/{jira-task-name}
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge feature/{jira-task-name}
 6. **Resolve merge conflicts! If necessary**
 7. **Push to main and delete feature branch**
-      ```bash
-  git push origin main
-  git branch -d feature/{jira-task-name}
+   ```bash
+   git push origin main
+   git branch -d feature/{jira-task-name}
 
 ## To test locally:
 1. cd job-trend-analyzer/backend/app
