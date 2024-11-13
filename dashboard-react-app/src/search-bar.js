@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './search-bar.css'
 
-function SearchBar ({ placeholder, onSearch }) {
+function SearchBar ({ placeholder, onSearch, showButton = true }) {
     const [query, setQuery] = useState('')
 
     const handleInput = (event) => {
@@ -20,7 +20,7 @@ function SearchBar ({ placeholder, onSearch }) {
                 value = {query}
                 onChange = {handleInput}
             />
-            <button onClick={handleSearch}>Search</button>
+            {showButton && <button onClick={handleSearch}>Search</button>}
         </div>
     )
 }

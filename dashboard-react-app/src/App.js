@@ -2,6 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import SearchBar from './search-bar';
+import TaskBar from './task-bar';
 
 
 function App() {
@@ -29,8 +30,10 @@ function App() {
 
   return (
     <div className="App">
-        <h1>Job Analyzer</h1>
-        <p>Message from API: {message}</p>
+
+        <section className = "task-bar">
+          <TaskBar/>
+        </section>
 
         <section className="search-section">
           <h2>Select an Employer</h2>

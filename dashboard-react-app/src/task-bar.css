@@ -1,0 +1,60 @@
+.task-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-top: 5px;
+    margin-left: 40px;
+    background-color:  grey;
+}
+
+.name h2{
+    color: black;
+    margin-top: 20px;
+    margin-left: 20px;
+
+}
+
+.task-bar-links {
+    list-style: none;
+    display: flex;
+    margin-left: 140px;
+}
+
+.task-bar-links li {
+    margin-left: 40px;
+}
+
+.task-bar-links a {
+    color: black;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.task-search-bar {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    margin-left: 50px;
+}
+
+.task-search-bar input {
+    flex-grow: 1;  /* Allow the input to take up the available space */
+    padding: 5px 5px;  /* Increased padding for a bigger search box */
+    font-size: 11px;  /* Larger font size */
+    border-radius: 5px;  /* Optional: make the corners rounder */
+    border: 2px solid #ccc;  /* Slightly thicker border */
+    text-align: left;  /* Ensure text inside the input is left-aligned */
+    margin-left: 0;  /* Prevent any additional left margin */
+    width: 100%;  /* Ensure the input field fills the width */
+    height: 20px;  /* Increased height to make the input box taller */
+}
+
+
+
+
