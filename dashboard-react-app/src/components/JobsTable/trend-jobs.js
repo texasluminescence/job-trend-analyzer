@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import './task-bar.css';
-import SearchBar from './search-bar';
-import BlackCircle from './BlackCircle.png';
+import '../TaskBar/task-bar.css';
+import SearchBar from '../SearchBar/search-bar';
+import BlackCircle from '../../assets/BlackCircle.png';
 
 
 const JobsTable = () => {

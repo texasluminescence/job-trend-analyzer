@@ -1,55 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
-import React, { useState, useEffect } from 'react';
-import './trend-jobs.css'
-import TaskBar from './task-bar';
-import JobsTable from "./trend-jobs";
-import SearchBar from "./search-bar";
-import SkillsTable from "./trend-skills";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+// import Navbar from "./components/Navbar/Navbar";
+// import Footer from "./components/Footer/Footer";
+import Home from "./pages/Home/home";
+import Account from "./pages/Account/account";
+import Personalized from "./pages/Personalized/personalized";
+import NotFound from "./pages/NotFound/notfound";
 
-
-function App() {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    // Call the FastAPI backend
-    fetch('http://127.0.0.1:8000/test')
-      .then(response => response.text())
-      .then(data => setMessage(data))
-      .catch(error => console.error("Error fetching data:", error));
-  }, []);
-
-  const handleIndustrySearch = (query) => {
-    // Console logs current industry user is searching
-    console.log('Searching for industry: ${query}');
-  }
-
+export default function App() {
   return (
-    <div className="App">
-
-        <section className = "task-bar">
-          <TaskBar/>
-        </section>
-
-        <section className="jobs-section">
-          <h2>Select an Industry</h2>
-          <p className="description-text">Explore detailed information about roles in your industry</p>
-          <SearchBar placeholder="Search for a industry" onSearch={handleIndustrySearch} />
-        </section>
-
-        <section className="jobs-section">
-            <h2>These Jobs Are Currently Trending In Your Field</h2>
-            <p className="description-text">Click Each Role For More Information</p>
-            <JobsTable/>
-        </section>
-
-        <section className="jobs-section">
-            <h2>These Skills Are Currently Trending In Your Field</h2>
-            <p className="description-text">Click Each Skill For More Information</p>
-            <SkillsTable/>
-        </section>
-    </div>
-  );
+          <BrowserRouter>
+          <Routes>
+              <Route index element={<Home />} />
+              <Route path="account" element={<Account />} />
+              <Route path="personalized" element={<Personalized />} />
+              <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+    );
 }
 
-export default App;
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);

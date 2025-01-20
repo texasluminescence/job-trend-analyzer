@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './task-bar.css';
+import '../TaskBar/task-bar.css';
 
 
 const SkillsTable = () => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './task-bar.css';
-import SearchBar from './search-bar';
-import BlackCircle from './BlackCircle.png';
+import SearchBar from '../SearchBar/search-bar';
+import BlackCircle from '../../assets/BlackCircle.png';
 
 
 const TaskBar = () => {
@@ -16,8 +16,8 @@ const TaskBar = () => {
             </div>
             <ul className = "task-bar-links">
                 <li> <a href = "/" >Home</a></li>
-                <li> <a href = "/" >Personalized Insights</a></li>
-                <li> <a href = "/" >Your Account</a></li>
+                <li> <a href = "/personalized" >Personalized Insights</a></li>
+                <li> <a href = "/account" >Your Account</a></li>
             </ul>
         </div>
     );
