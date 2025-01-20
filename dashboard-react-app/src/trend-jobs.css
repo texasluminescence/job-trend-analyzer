@@ -1,0 +1,26 @@
+.jobs-section{
+    background-color: #f2f2f2;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px;
+    align-items: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: cornflowerblue;
+  color: white;
+}
+
+tr:nth-child(even) {background-color: white;}
+tr:hover {background-color: cornflowerblue;}

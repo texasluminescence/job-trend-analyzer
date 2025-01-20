@@ -1,30 +1,24 @@
 import React, { useState } from 'react';
 import './task-bar.css';
 import SearchBar from './search-bar';
+import BlackCircle from './BlackCircle.png';
 
 
 const TaskBar = () => {
-    const handleSearch = (query) => {
-        console.log('Searching for: ' + query);
-    };
-
     return(
 
         <div className="task-bar">
-            <div className = "logo"></div>
+            <div className = "logo">
+                <img src={BlackCircle}/>
+            </div>
             <div className = "name">
-                <h2>OpenToWork</h2>
+                <h2>JobSense</h2>
             </div>
             <ul className = "task-bar-links">
                 <li> <a href = "/" >Home</a></li>
-                <li> <a href = "/" >Industry Insights</a></li>
-                <li> <a href = "/" >Company Insights</a></li>
-                <li> <a href = "/" >Company Leaderboard</a></li>
+                <li> <a href = "/" >Personalized Insights</a></li>
+                <li> <a href = "/" >Your Account</a></li>
             </ul>
-
-            <div className = "task-search-bar">
-                <SearchBar placeholder="Search in site" onSearch={handleSearch} showButton={false} />
-            </div>
         </div>
     );
 };
