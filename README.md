@@ -29,3 +29,6 @@
 3. Open another terminal
 4. cd job-trend-analyzer/dashboard-react-app
 5. run npm start in your command line
+
+## To use the Swagger UI:
+http://127.0.0.1:8000/docs
