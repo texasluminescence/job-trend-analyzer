@@ -5,6 +5,7 @@ import TaskBar from '../../components/TaskBar/task-bar';
 import JobsTable from "../../components/JobsTable/trend-jobs";
 import SearchBar from "../../components/SearchBar/search-bar";
 import SkillsTable from "../../components/SkillsTable/trend-skills";
+import PopUp from "../../components/PopUp/pop-up";
 
 function Home() {
   const [message, setMessage] = useState('');
