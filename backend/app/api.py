@@ -1,29 +1,39 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
+from pydantic import BaseModel
+from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-    "localhost:3000"
-]
+# Load .env file
+load_dotenv()
 
+# MongoDB setup
+MONGO_URL = os.getenv("MONGO_URL")
+client = MongoClient(MONGO_URL)
+db = client["DB1"]
+collection = db["Users"]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+# Pydantic model for request validation
+class User(BaseModel):
+    name: str
+    password: str
 
+# Routes
+@app.post("/users/")
+def add_user(user: User):
+    result = collection.insert_one(user.dict())
+    return {"id": str(result.inserted_id)}
 
-@app.get("/", tags=["root"])
-async def read_root() -> dict:
-    return {"message": "Welcome to your todo list."}
+@app.get("/users/")
+def get_users():
+    users = []
+    for user in collection.find():
+        user["_id"] = str(user["_id"])
+        users.append(user)
+    return {"data": users}
 
-
-@app.get("/test")
-def test():
-    return "hello_world"
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to FastAPI with synchronous MongoDB"}
