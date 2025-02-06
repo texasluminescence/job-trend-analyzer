@@ -21,7 +21,7 @@ const Personalized = () => {
     {letter: "2", name: "Stripe", job: "Data Engineer", location: "Austin, TX"},
     {letter: "3", name: "Google", job: "Software Engineer", location: "Austin, TX"},
     {letter: "4", name: "Uber", job: "Product Manager", location: "Austin, TX"},
-    {letter: "5", name: "Crowdstrike", job: "Data Analyst", location: "Austin, TX"},
+    {letter: "5", name: "CrowdStrike", job: "Data Analyst", location: "Austin, TX"},
     {letter: "6", name: "Samsung", job: " AI Research Scientist", location: "Austin, TX"},
     {letter: "7", name: "Meta", job: "Software Engineer", location: "Austin, TX"},
     {letter: "8", name: "Netflix", job: "Product Manager", location: "Austin, TX"},
