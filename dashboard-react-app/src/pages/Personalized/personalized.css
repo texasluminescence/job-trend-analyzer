@@ -1,0 +1,98 @@
+.container{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-top: 50px;
+}
+
+
+.title {
+    /* text-align: center; */
+    text-align: left;
+    margin-top: 350px;
+    font-size: 25px;
+    margin-left: 350px;
+    /* margin-right: 50px; */
+
+}
+
+
+.para {
+    font-size: 14px;
+    text-align: left;
+    margin-left: 350px;
+    margin-right: 0px;
+}
+
+.list{
+    list-style-type: none;
+    padding: 0;
+    width: 90%;
+    max-width: 600px;
+    margin-left: 1000px;
+    margin-top: -450px;
+}
+
+.list-item{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: rgba(194, 13, 182, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.list-item:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+.circle{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: purple;
+    color: white;
+    display: flex;
+    align-items:center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    margin-right: 15px;
+}
+
+.modal-overlay{
+    position: fixed;
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.1);
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+.modal{
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+    height: auto;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    position: center;
+    margin-bottom: 150px;
+}
+
+.company-details{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    position: center;
+}
+
+button {
+    margin-top: 200px;
+    padding: 10px 20px;
+    background-color: purple;
+}
