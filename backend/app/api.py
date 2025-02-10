@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from pymongo import MongoClient
 import os
+import pandas as pd
 from dotenv import load_dotenv
 
 app = FastAPI()
@@ -33,6 +34,11 @@ def get_users():
         user["_id"] = str(user["_id"])
         users.append(user)
     return {"data": users}
+
+@app.get("/data")
+async def get_data():
+    df = pd.read_csv("backend/app/data/postings.csv")
+    return df.to_dict(orient="records")
 
 @app.get("/")
 def read_root():
