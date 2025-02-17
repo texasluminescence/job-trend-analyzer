@@ -1,0 +1,33 @@
+{
+  "proxies": {},
+  "headers": {},
+  "OpenAI_API_KEY": "",
+  "OpenAI_Model": "",
+  "resume_path": "full local path to your resume in PDF format",
+  "search_queries": [
+    {"keywords": "software engineer", "location": "United States", "f_WT": ""}
+  ],
+  "desc_words": [
+    "Python", "Java", "JavaScript", "C++", "C#", "Ruby", "Go", "Rust",
+    "SQL", "NoSQL", "AWS", "Azure", "GCP", "Docker", "Kubernetes",
+    "CI/CD", "Git", "Agile", "Scrum", "REST API", "microservices",
+    "machine learning", "artificial intelligence", "data structures",
+    "algorithms", "software architecture", "cloud computing",
+    "distributed systems", "cybersecurity", "DevOps", "full-stack"
+  ],
+  "title_exclude": ["manager", "director", "lead"],
+  "title_include": [
+    "software engineer", "developer", "programmer", "coder",
+    "backend", "frontend", "full-stack", "DevOps", "SRE"
+  ],
+  "company_exclude": [],
+  "languages": ["en"],
+  "timespan": "r2592000",
+  "jobs_tablename": "jobs",
+  "filtered_jobs_tablename": "filtered_jobs",
+  "db_path": "./data/linkedin_jobs.db",
+  "pages_to_scrape": 40,
+  "rounds": 1,
+  "days_to_scrape": 30,
+  "app_table": "jobs"
+}
