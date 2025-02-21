@@ -42,7 +42,8 @@ def add_user(user: User):
 # If it does, approve login
 # Returns true/false or also could return user information depending on implementation
 @app.post("/login/")
-def login() -> bool:
+def login(email: str, password: str) -> bool:
+    # password input should be encrypted
     return True
 
 # Input is users email address, returns information about user to display on profile page/be used for ML functions
