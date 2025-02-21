@@ -18,14 +18,53 @@ collection = db["Users"]
 
 # Pydantic model for request validation
 class User(BaseModel):
-    name: str
+    first_name: str
+    last_name: str
+    email: str
     password: str
+    education_level: str
+    graduation_date: str
+    degree: str
+    industries: list
+    yoe: int
+    skills: dict
+    type_of_work: str
 
 # Routes
-@app.post("/users/")
+@app.post("/user/")
 def add_user(user: User):
     result = collection.insert_one(user.dict())
     return {"id": str(result.inserted_id)}
+
+
+# Setting up function to enable login (users credentials are input (email) verify that the encrypted password in DB matches password inputted when encrypted)
+# If it does, approve login
+# Returns true/false or also could return user information depending on implementation
+@app.post("/login/")
+def login():
+    return True
+
+# Input is users email address, returns information about user to display on profile page/be used for ML functions
+# Uses email address to index into DB
+# returns user info
+@app.get("/user/")
+def get_user():
+    user = collection.find_one()
+    return user.dict()
+
+@app.get("/top_jobs/")
+def get_top_jobs():
+    # make a call to job model that returns most popular jobs for your industry
+    # we might store these in a DB and only refresh them with the model every 15 days
+    # returns a list of jobs
+    return ['job #1']
+
+@app.get("/top_skills/")
+def get_top_skills():
+    # make a call to skill model to get top skills for industry to display
+    # returns a list of skills
+    return ['skill #1']
+
 
 @app.get("/users/")
 def get_users():
