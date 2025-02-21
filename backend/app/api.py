@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -41,26 +42,26 @@ def add_user(user: User):
 # If it does, approve login
 # Returns true/false or also could return user information depending on implementation
 @app.post("/login/")
-def login():
+def login() -> bool:
     return True
 
 # Input is users email address, returns information about user to display on profile page/be used for ML functions
 # Uses email address to index into DB
 # returns user info
 @app.get("/user/")
-def get_user():
+def get_user(email: str) -> User:
     user = collection.find_one()
     return user.dict()
 
 @app.get("/top_jobs/")
-def get_top_jobs():
+def get_top_jobs() -> List[str]:
     # make a call to job model that returns most popular jobs for your industry
     # we might store these in a DB and only refresh them with the model every 15 days
     # returns a list of jobs
     return ['job #1']
 
 @app.get("/top_skills/")
-def get_top_skills():
+def get_top_skills() -> List[str]:
     # make a call to skill model to get top skills for industry to display
     # returns a list of skills
     return ['skill #1']
