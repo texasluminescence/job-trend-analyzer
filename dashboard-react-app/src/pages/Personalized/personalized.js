@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import "./personalized.css"
+import BarChart from "./personalized-bar-graph";
+import "./personalized.css";
 
 
 const Personalized = () => {
@@ -29,22 +30,46 @@ const Personalized = () => {
     {letter: "10", name: "Bloomberg", job: "Financial Analyst", location: "Austin, TX"}
   ];
 
+  const comp = [
+    {letter: "1", name: "Python", job: "Software Engineer", location: "Austin, TX"},
+    {letter: "2", name: "Java", job: "Data Engineer", location: "Austin, TX"},
+    {letter: "3", name: "Machine learning", job: "Software Engineer", location: "Austin, TX"},
+    {letter: "4", name: "Data analytics", job: "Product Manager", location: "Austin, TX"},
+    {letter: "5", name: "C++", job: "Data Analyst", location: "Austin, TX"},
+    {letter: "6", name: "JavaScript", job: " AI Research Scientist", location: "Austin, TX"},
+    {letter: "7", name: "Git", job: "Software Engineer", location: "Austin, TX"},
+    {letter: "8", name: "Research", job: "Product Manager", location: "Austin, TX"},
+    {letter: "9", name: "UI design", job: "Software Development Engineer", location: "Austin, TX"},
+    {letter: "10", name: "HTML/CSS", job: "Financial Analyst", location: "Austin, TX"}
+  ];
+
   return (
     <div className="container">
       <h1 className="title">
-        Top Companies to Work for in your Industry
+        Your Personalized Job Trends
       </h1>
       <p className="para">
-        Explore rankings of the best companies to work for in your industry based on your preferences.
+        Skill and role recommendations for you
+      </p>
+      <h1 className="title2">
+        Based on Your Skills ...
+      </h1>
+      <p className="para2">
+        Popular skills you may want to learn
       </p>
       <ul className="list">
-        {companies.map((company, index) => (
-          <li className="list-item" key={index} onClick={() => openModal(company)}>
+        {comp.map((company, index) => (
+          <li className="list-item" key={index}>
             <div className="circle">{company.letter}</div>
             <span className="text">{company.name}</span>
-            <input type="checkbox"
-              className="checkbox"
-              onClick={(e) => e.stopPropagation()}/>
+          </li>
+        ))}
+      </ul>
+      <ul className="list1">
+        {companies.map((company, index) => (
+          <li className="list1-item" key={index} onClick={() => openModal(company)}>
+            <div className="circle1">{company.letter}</div>
+            <span className="text1">{company.name}</span>
           </li>
         ))}
       </ul>  
@@ -61,6 +86,10 @@ const Personalized = () => {
           </div>
         </div>
       )}
+
+      <div>
+        <BarChart/>
+      </div>
     </div>
   );
 };
