@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../../components/JobsTable/trend-jobs.css'
 import './home.css'
-import TaskBar from '../../components/TaskBar/task-bar';
 import JobsTable from "../../components/JobsTable/trend-jobs";
 import SearchBar from "../../components/SearchBar/search-bar";
 import SkillsTable from "../../components/SkillsTable/trend-skills";
@@ -25,11 +24,6 @@ function Home() {
 
   return (
     <div className="App">
-
-        <section className = "task-bar">
-          <TaskBar/>
-        </section>
-
         <section className="jobs-section">
           <h2>Select an Industry</h2>
           <p className="description-text">Explore detailed information about roles in your industry</p>
