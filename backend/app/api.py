@@ -39,7 +39,7 @@ def add_user(user: User):
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
     user_dict = user.dict()
     user_dict["password"] = hashed_password.decode('utf-8')
-    result = collection.insert_one(user_dict)
+    result = collection.insert_one(user_dict )
     return {"id": str(result.inserted_id)}
 
 
