@@ -30,12 +30,12 @@ const BarChart = () => {
       {
         label: "Number of Applicants",
         data: [1710, 1452, 2098, 1607, 1420, 1453, 1910, 1112, 1998, 1245],
-        backgroundColor: "#ff1493",
+        backgroundColor: "#6495ED",
       },
       {
         label: "Number of Accepted Applicants",
         data: [678, 458, 975, 231, 187, 915, 523, 389, 781, 805],
-        backgroundColor: "#8a2be2",
+        backgroundColor: "#000000",
       },
     ],
   };
