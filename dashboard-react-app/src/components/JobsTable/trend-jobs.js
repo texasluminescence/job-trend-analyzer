@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
 import '../TaskBar/task-bar.css';
-import SearchBar from '../SearchBar/search-bar';
-import BlackCircle from '../../assets/BlackCircle.png';
 import PopUp from '../PopUp/pop-up';
+import './trend-jobs.css';
 
-
-const JobsTable = () => {
-
+const JobsTable = ({ roles = [], loading = false }) => {
   const [isPopUpOpen, setIsPopUpOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
 
-    // Open the modal and set the job data
-    const openPopUp = (jobData) => {
-      setSelectedJob(jobData);
-      setIsPopUpOpen(true);
-    };
-  
-    // Close the modal
-    const closePopUp = () => {
-      setIsPopUpOpen(false);
-      setSelectedJob({});
-    };
+  // Open the modal and set the job data
+  const openPopUp = (jobData) => {
+    setSelectedJob(jobData);
+    setIsPopUpOpen(true);
+  };
 
-    const jobs = [
-      { title: "Data Engineer", roles: 10000, companies: "Meta, Google" },
-      { title: "Product Manager", roles: 5000, companies: "Oracle" },
-      { title: "Data Engineer", roles: 10000, companies: "Meta, Google" },
-      { title: "Product Manager", roles: 5000, companies: "Oracle" },
-      { title: "Data Engineer", roles: 10000, companies: "Meta, Google" },
-      { title: "Product Manager", roles: 5000, companies: "Oracle" }
-    ];
+  // Close the modal
+  const closePopUp = () => {
+    setIsPopUpOpen(false);
+    setSelectedJob({});
+  };
 
-    return(
-      <div>
+  if (loading) {
+    return <div className="loading-spinner">Loading popular roles...</div>;
+  }
+
+  if (roles.length === 0 && !loading) {
+    return (
+      <div className="no-selection-message">
+        Please select an industry to view trending roles.
+      </div>
+    );
+  }
+
+  return (
+    <div>
       <table>
         <thead>
           <tr>
@@ -42,7 +42,7 @@ const JobsTable = () => {
           </tr>
         </thead>
         <tbody>
-          {jobs.map((job, index) => (
+          {roles.map((job, index) => (
             <tr key={index} onClick={() => openPopUp(job)}>
               <td>{job.title}</td>
               <td>{job.roles}</td>

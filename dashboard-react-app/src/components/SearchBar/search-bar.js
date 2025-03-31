@@ -1,28 +1,64 @@
-import React, { useState } from 'react';
-import './search-bar.css'
 
-function SearchBar ({ placeholder, onSearch, showButton = true }) {
-    const [query, setQuery] = useState('')
+import React, { useState, useEffect } from 'react';
+import './search-bar.css';
 
-    const handleInput = (event) => {
-        setQuery(event.target.value);
-    };
+const SearchBar = ({ onSearch, placeholder }) => {
+  const [industries, setIndustries] = useState([]);
+  const [selectedIndustry, setSelectedIndustry] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    const handleSearch = () => {
-        onSearch(query);
-    };
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/industries')
+      .then(response => response.json())
+      .then(data => {
+        setIndustries(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching industries:", error);
+        setError("Failed to load industries. Please try again later.");
+        setLoading(false);
+      });
+  }, []);
 
-    return (
-        <div className="search-bar">
-            <input
-                type = "text"
-                placeholder = {placeholder}
-                value = {query}
-                onChange = {handleInput}
-            />
-            {showButton && <button onClick={handleSearch}>Search</button>}
-        </div>
-    )
-}
+  const handleSelectChange = (e) => {
+    setSelectedIndustry(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedIndustry) {
+      onSearch(selectedIndustry);
+    }
+  };
+
+  return (
+    <div className="search-bar">
+      {loading ? (
+        <div className="loading">Loading industries...</div>
+      ) : error ? (
+        <div className="error">{error}</div>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <select 
+            value={selectedIndustry} 
+            onChange={handleSelectChange}
+            className="industry-dropdown"
+          >
+            <option value="">Select an industry</option>
+            console.log(industries)
+            {industries.map((industry, index) => (
+              <option key={index} value={industry.name}>
+                {industry.name}
+              </option>
+            ))}
+          </select>
+          <button type="submit">View Industry</button>
+        </form>
+      )}
+    </div>
+  );
+};
 
 export default SearchBar;

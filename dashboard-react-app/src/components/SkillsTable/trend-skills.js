@@ -1,34 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../TaskBar/task-bar.css';
 import PopUp from '../PopUp/pop-up';
 
-const SkillsTable = () => {
-
+const SkillsTable = ({ industry = '', loading = false }) => {
   const [isPopUpOpen, setIsPopUpOpen] = useState(false);
-    const [selectedSkill, setSelectedSkill] = useState(null);
-  
-      // Open the modal and set the job data
-      const openPopUp = (skillData) => {
-        setSelectedSkill(skillData);
-        setIsPopUpOpen(true);
-      };
+  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [popularSkills, setPopularSkills] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (industry) {
+      fetchPopularSkills(industry);
+    } else {
+      setPopularSkills([]);
+    }
+  }, [industry]);
+
+  const fetchPopularSkills = (industryName) => {
+    setIsLoading(true);
+    setError('');
     
-      // Close the modal
-      const closePopUp = () => {
-        setIsPopUpOpen(false);
-        setSelectedSkill(null);
-      };
-  
-      const skills = [
-        { skill: "Python", jobs: "Data Engineer", number: 10000 },
-        { skill: "Python", jobs: "Data Engineer", number: 10000},
-        { skill: "Python", jobs: "Data Engineer", number: 10000 },
-        { skill: "Python", jobs: "Data Engineer", number:10000},
-        { skill: "Python", jobs:"Data Engineer", number:10000 },
-        { skill: "Python", jobs: "Data Engineer", number: 10000 }
-      ];
-    return(
-      <div>
+    fetch(`http://127.0.0.1:8000/popular-skills?industry=${encodeURIComponent(industryName)}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch skills for this industry');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setPopularSkills(data);
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching popular skills:", error);
+        setPopularSkills([]);
+        setIsLoading(false);
+        setError("Could not load skills for the selected industry.");
+      });
+  };
+
+  // Open the modal and set the skill data
+  const openPopUp = (skillData) => {
+    setSelectedSkill(skillData);
+    setIsPopUpOpen(true);
+  };
+
+  // Close the modal
+  const closePopUp = () => {
+    setIsPopUpOpen(false);
+    setSelectedSkill(null);
+  };
+
+  if (isLoading) {
+    return <div className="loading-spinner">Loading popular skills...</div>;
+  }
+
+  if (popularSkills.length === 0 && !isLoading) {
+    return (
+      <div className="no-selection-message">
+        {industry ? "No skills found for this industry." : "Please select an industry to view trending skills."}
+      </div>
+    );
+  }
+
+  return (
+    <div>
       <table>
         <thead>
           <tr>
@@ -38,7 +75,7 @@ const SkillsTable = () => {
           </tr>
         </thead>
         <tbody>
-          {skills.map((skill, index) => (
+          {popularSkills.map((skill, index) => (
             <tr key={index} onClick={() => openPopUp(skill)}>
               <td>{skill.skill}</td>
               <td>{skill.jobs}</td>
@@ -48,41 +85,13 @@ const SkillsTable = () => {
         </tbody>
       </table>
 
-      {/* Pass isOpen and close functions to the PopUp component */}
       <PopUp 
         isOpen={isPopUpOpen} 
         close={closePopUp} 
         jobData={selectedSkill} 
       />
     </div>
-        // <table>
-        //   <tr>
-        //     <th>Skill</th>
-        //     <th>Jobs Looking for This Skill</th>
-        //     <th>Number of Job Postings Including This Skill</th>
-        //   </tr>
-        //   <tr>
-        //     <td>Python</td>
-        //     <td>Data Engineer</td>
-        //     <td>10000</td>
-        //   </tr>
-        //   <tr>
-        //     <td>Python</td>
-        //     <td>Data Engineer</td>
-        //     <td>10000</td>
-        //   </tr>
-        //   <tr>
-        //     <td>Python</td>
-        //     <td>Data Engineer</td>
-        //     <td>10000</td>
-        //   </tr>
-        //     <tr>
-        //     <td>Python</td>
-        //     <td>Data Engineer</td>
-        //     <td>10000</td>
-        //   </tr>
-        // </table>
-    );
+  );
 };
 
 export default SkillsTable;

@@ -1,10 +1,11 @@
 from typing import List
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from pymongo import MongoClient
 import os
 import pandas as pd
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
@@ -16,6 +17,15 @@ MONGO_URL = os.getenv("MONGO_URL")
 client = MongoClient(MONGO_URL)
 db = client["DB1"]
 collection = db["Users"]
+industries_collection = db["Industries"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Pydantic model for request validation
 class User(BaseModel):
@@ -80,6 +90,52 @@ def get_users():
 async def get_data():
     df = pd.read_csv("backend/app/data/postings.csv")
     return df.to_dict(orient="records")
+
+@app.get("/industries/{industry_name}")
+def get_industry(industry_name: str):
+    """
+    Get industry details including popular roles.
+    """
+    industry = industries_collection.find_one({"name": {"$regex": f"^{industry_name}$", "$options": "i"}})
+    
+    if not industry:
+        raise HTTPException(status_code=404, detail="Industry not found")
+
+    industry["_id"] = str(industry["_id"])
+    
+    return industry
+
+@app.get("/industries")
+def get_all_industries():
+    """
+    Get list of all available industries.
+    """
+    industries = industries_collection.find({}, {"Industry": 1})
+    return [{"name": industry["Industry"], "_id": str(industry["_id"])} for industry in industries]
+
+@app.get("/popular-roles")
+def get_popular_roles(industry: str = Query(..., description="Industry to get popular roles for")):
+    """
+    Get popular roles for a specific industry.
+    """
+    industry_doc = industries_collection.find_one({"name": {"$regex": f"^{industry}$", "$options": "i"}})
+    
+    if not industry_doc or "popular_roles" not in industry_doc:
+        raise HTTPException(status_code=404, detail="Industry or popular roles not found")
+    
+    return industry_doc["popular_roles"]
+
+@app.get("/popular-skills", response_model=List)
+def get_popular_skills(industry: str = Query(..., description="Industry to get popular skills for")):
+    """
+    Get popular skills for a specific industry.
+    """
+    industry_doc = industries_collection.find_one({"name": {"$regex": f"^{industry}$", "$options": "i"}})
+    
+    if not industry_doc or "popular_skills" not in industry_doc:
+        raise HTTPException(status_code=404, detail="Industry or popular skills not found")
+    
+    return industry_doc["popular_skills"]
 
 @app.get("/")
 def read_root():
