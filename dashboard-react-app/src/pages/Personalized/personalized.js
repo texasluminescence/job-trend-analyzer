@@ -118,14 +118,19 @@ const Personalized = () => {
       <p className="para">Skill and role recommendations for you</p>
       <h1 className="title2">Based on Your Skills ...</h1>
       <p className="para2">Popular skills you may want to learn</p>
-      <ul className="list">
-        {comp.map((company, index) => (
-          <li className="list-item" key={index}>
-            <div className="circle">{company.letter}</div>
-            <span className="text">{company.name}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="list-bar">
+        <ul className="list">
+          {comp.map((company, index) => (
+            <li className="list-item" key={index}>
+              <div className="circle">{company.letter}</div>
+              <span className="text">{company.name}</span>
+            </li>
+          ))}
+        </ul>
+          <div>
+            <BarChart />
+        </div>
+      </div>
       <h1 className="title3">Jobs For You</h1>
       <ul className="list1">
         {companies.map((company, index) => (
@@ -161,9 +166,9 @@ const Personalized = () => {
         </div>
       )}
 
-      <div>
+      {/* <div>
         <BarChart />
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -4,7 +4,8 @@
   align-items: flex-start;
   justify-content: flex-start;
   margin-top: 50px;
-  margin-left: 350px;
+  margin-left: 0px;
+  padding-left: 40px;
 }
 
 .title {
@@ -23,7 +24,7 @@
   margin-left: 350px;
   margin-right: 0px;
   margin: 0 0 10px 0;
-  margin-bottom: 75px;
+  margin-bottom: 60px;
 }
 
 .title2 {
@@ -64,6 +65,14 @@
   max-width: 1200px;
   margin: 0 0 10px 0;
 }
+
+.list-bar{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 50px;
+  width: 100%;
+}
 .list {
   list-style-type: none;
   padding: 0;
@@ -99,7 +108,7 @@
   border-radius: 10px;
   padding: 15px;
   margin-bottom: 10px;
-  background-color: rgba(194, 13, 182, 0.1);
+  background-color: #F2F2F2;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -123,7 +132,7 @@
 .list1 {
   list-style-type: none;
   padding: 0;
-  width: 1400px;
+  width: 1310px;
   margin-top: 100px;
   display: flex;
   flex-wrap: wrap;
@@ -140,6 +149,8 @@
   display: grid;
   gap: 40px;
   flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 
 .list1-item {
@@ -150,7 +161,7 @@
   border-radius: 10px;
   padding: 15px;
   margin-bottom: 10px;
-  background-color: rgba(194, 13, 182, 0.1);
+  background-color: #F2F2F2;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -168,7 +179,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: purple;
+  background-color: #6495ED;
   color: white;
   display: flex;
   align-items: center;
@@ -182,7 +193,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: purple;
+  background-color: #6495ED;
   color: white;
   display: flex;
   align-items: center;
@@ -190,7 +201,7 @@
   font-weight: bold;
   font-size: 18px;
   position: absolute;
-  margin: 0 1320px 0 0;
+  margin: 0 0 0 -600px;
 }
 
 .modal-overlay {
@@ -214,7 +225,7 @@
   box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1);
   text-align: center;
   position: fixed;
-  margin-bottom: 150px;
+  margin-bottom: 10px;
 }
 
 .company-details {
@@ -229,7 +240,9 @@ button {
 }
 
 .bar-graph {
-  margin: -1615px 0 0 680px;
+  /* margin: 800px; */
   width: 800px;
   height: 500px;
+  margin-top: -25px;
+  padding-right: 50px;
 }
