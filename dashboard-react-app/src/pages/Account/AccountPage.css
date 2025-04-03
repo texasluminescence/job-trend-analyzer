@@ -1,0 +1,69 @@
+.account-section {
+    /* background-color: #183a52; */
+    /* background-color: #6f35b9; */
+    background-color: #6894e6;
+    padding: 50px 20px;
+    gap: 20px;
+    text-align: left;
+    color: #ffffff;
+}
+
+.account-section-headers {
+    padding: 10px 20px;
+  }
+  
+.account-section-headers h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.info-boxes-area {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+}
+  
+.info-text-box {
+    background: transparent;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out;
+}
+  
+.info-text-box h3 {
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    color: #f2f2f2;
+}
+  
+.info-text-box p {
+    margin-bottom: 20px;
+    line-height: 1.6;
+    color: #d0d0d0;
+}
+  
+.info-text-box button {
+    background-color: #f2f2f2;
+    color: #1d2a35;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+  
+.info-text-box button:hover {
+    background-color: #d0d0d0;
+}
+  
+.info-text-box:hover {
+    transform: translateY(-5px);
+}
+  
+@media (max-width: 768px) {
+    .info-boxes-area {
+        grid-template-columns: 1fr;
+    }
+}
