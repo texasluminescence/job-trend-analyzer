@@ -1,7 +1,7 @@
 import React from 'react';
-import 'accountsection.css';
+import 'AccountPage.css';
 
-const Account = () => {
+const AccountPage = () => {
     return (
         <section className="account-section">
                 <div className="account-section-headers">
@@ -42,3 +42,5 @@ const Account = () => {
         </section>
     );
 };
+
+export default AccountPage
