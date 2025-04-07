@@ -6,6 +6,7 @@ import os
 import pandas as pd
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+import bcrypt
 
 app = FastAPI()
 
@@ -44,7 +45,11 @@ class User(BaseModel):
 # Routes
 @app.post("/user/")
 def add_user(user: User):
-    result = collection.insert_one(user.dict())
+     # result = collection.insert_one(user.dict())
+    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
+    user_dict = user.dict()
+    user_dict["password"] = hashed_password.decode('utf-8')
+    result = collection.insert_one(user_dict )
     return {"id": str(result.inserted_id)}
 
 
@@ -54,7 +59,11 @@ def add_user(user: User):
 @app.post("/login/")
 def login(email: str, password: str) -> bool:
     # password input should be encrypted
-    return True
+    user = collection.find_one({"email": email})
+    stored_hashed_password = user["password"].encode('utf-8')
+    if user and bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):
+        return True
+    return False
 
 # Input is users email address, returns information about user to display on profile page/be used for ML functions
 # Uses email address to index into DB
