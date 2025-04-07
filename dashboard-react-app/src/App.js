@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home/home";
-import Account from "./pages/Account/account";
+import Account from "./pages/Account/AccountPage";
 import Personalized from "./pages/Personalized/personalized";
 import NotFound from "./pages/NotFound/notfound";
 import './components/TaskBar/task-bar.css';

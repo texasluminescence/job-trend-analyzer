@@ -1,62 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import '../TaskBar/task-bar.css';
+import './trend-skills.css';
 import PopUp from '../PopUp/pop-up';
 
-const SkillsTable = ({ industry = '', loading = false }) => {
+const SkillsTable = ({ industry = '', loading = false, popularSkills = [] }) => {
   const [isPopUpOpen, setIsPopUpOpen] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState(null);
-  const [popularSkills, setPopularSkills] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [skillDetails, setSkillDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
-  useEffect(() => {
-    if (industry) {
-      fetchPopularSkills(industry);
-    } else {
-      setPopularSkills([]);
-    }
-  }, [industry]);
-
-  const fetchPopularSkills = (industryName) => {
-    setIsLoading(true);
-    setError('');
-    
-    fetch(`http://127.0.0.1:8000/popular-skills?industry=${encodeURIComponent(industryName)}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch skills for this industry');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setPopularSkills(data);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error("Error fetching popular skills:", error);
-        setPopularSkills([]);
-        setIsLoading(false);
-        setError("Could not load skills for the selected industry.");
-      });
-  };
-
-  // Open the modal and set the skill data
-  const openPopUp = (skillData) => {
+  // Open the modal and fetch detailed skill data
+  const openPopUp = async (skillData) => {
     setSelectedSkill(skillData);
     setIsPopUpOpen(true);
+    
+    // If we have a skill name, fetch more details
+    if (skillData.skill_name || skillData.skill) {
+      setLoadingDetails(true);
+      try {
+        const skillName = skillData.skill_name || skillData.skill;
+        const response = await fetch(`http://127.0.0.1:8000/skills/${encodeURIComponent(skillName)}`);
+        
+        if (response.ok) {
+          const details = await response.json();
+          setSkillDetails(details);
+        } else {
+          // If detailed API fails, we'll just use what we have
+          setSkillDetails(null);
+        }
+      } catch (error) {
+        console.error("Error fetching skill details:", error);
+        setSkillDetails(null);
+      } finally {
+        setLoadingDetails(false);
+      }
+    }
   };
 
   // Close the modal
   const closePopUp = () => {
     setIsPopUpOpen(false);
     setSelectedSkill(null);
+    setSkillDetails(null);
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div className="loading-spinner">Loading popular skills...</div>;
   }
 
-  if (popularSkills.length === 0 && !isLoading) {
+  if (popularSkills.length === 0 && !loading) {
     return (
       <div className="no-selection-message">
         {industry ? "No skills found for this industry." : "Please select an industry to view trending skills."}
@@ -65,31 +57,47 @@ const SkillsTable = ({ industry = '', loading = false }) => {
   }
 
   return (
-    <div>
-      <table>
+    <div className="skills-table-container">
+      <table className="skills-table">
         <thead>
           <tr>
             <th>Skill</th>
             <th>Jobs Looking for This Skill</th>
-            <th>Number of Job Postings Including This Skill</th>
+            <th>Number of Job Postings</th>
           </tr>
         </thead>
         <tbody>
-          {popularSkills.map((skill, index) => (
-            <tr key={index} onClick={() => openPopUp(skill)}>
-              <td>{skill.skill}</td>
-              <td>{skill.jobs}</td>
-              <td>{skill.number}</td>
-            </tr>
-          ))}
+          {popularSkills.map((skillItem, index) => {
+            // Handle both simple string array and object array from API
+            const skillName = typeof skillItem === 'string' ? skillItem : (skillItem.skill_name || skillItem.skill);
+            const jobs = typeof skillItem === 'string' ? 'Various positions' : (skillItem.jobs || 'Various positions');
+            const number = typeof skillItem === 'string' ? 'N/A' : (skillItem.number || skillItem.job_postings_count || 'N/A');
+            
+            return (
+              <tr key={index} onClick={() => openPopUp(skillItem)} className="skill-row">
+                <td>{skillName}</td>
+                <td>{jobs}</td>
+                <td>{number}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
-      <PopUp 
-        isOpen={isPopUpOpen} 
-        close={closePopUp} 
-        jobData={selectedSkill} 
-      />
+      {isPopUpOpen && selectedSkill && (
+        <PopUp 
+          isOpen={isPopUpOpen} 
+          close={closePopUp} 
+          jobData={{
+            title: skillDetails?.skill_name || selectedSkill.skill_name || selectedSkill.skill || (typeof selectedSkill === 'string' ? selectedSkill : ''),
+            description: skillDetails?.description || selectedSkill.description || 
+              `${skillDetails?.skill_name || selectedSkill.skill_name || selectedSkill.skill || ''} is a popular skill in the ${industry} industry.`,
+            resources: skillDetails?.learning_resources || [],
+            industries: skillDetails?.industries || [industry],
+            isLoading: loadingDetails
+          }} 
+        />
+      )}
     </div>
   );
 };
