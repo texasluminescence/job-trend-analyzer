@@ -24,6 +24,18 @@ function Home() {
   // Base API URL
   const API_BASE_URL = 'http://127.0.0.1:8000';
 
+  // Helper function to format salary
+  const formatSalary = (salaryString) => {
+    if (!salaryString) return 'N/A';
+    
+    // If it contains a decimal point, split and keep only the dollar part
+    if (salaryString.includes('.')) {
+      return salaryString.split('.')[0];
+    }
+    
+    return salaryString;
+  };
+
   // Debug log to trace state changes
   useEffect(() => {
     console.log("Selected Industry:", selectedIndustry);
@@ -38,6 +50,9 @@ function Home() {
   }, []);
 
   useEffect(() => {
+    // Clear any existing errors when changing industry
+    setError('');
+    
     // Reset states when industry changes to avoid showing old data
     if (selectedIndustry) {
       // Reset data states first
@@ -103,12 +118,18 @@ function Home() {
         console.log("Fetched industry details:", data);
         setIndustryData(data);
         setLoadingIndustry(false);
+        // Clear any industry-related errors on success
+        setError('');
       })
       .catch(error => {
         console.error("Error fetching industry details:", error);
         setIndustryData(null);
         setLoadingIndustry(false);
-        setError("Failed to load industry details. Please try again later.");
+        // Only set the error if no other data is loaded yet
+        // This prevents showing an error when other parts still work
+        if (!popularRoles.length && !popularSkills.length && !industryMetrics) {
+          setError("Failed to load industry details. Please try again later.");
+        }
       });
   };
 
@@ -125,6 +146,8 @@ function Home() {
         console.log("Fetched industry metrics:", data);
         setIndustryMetrics(data);
         setLoadingMetrics(false);
+        // Clear any errors on successful data load
+        setError('');
       })
       .catch(error => {
         console.error("Error fetching industry metrics:", error);
@@ -168,6 +191,8 @@ function Home() {
         console.log("Fetched detailed popular roles:", data);
         setPopularRoles(data || []); // Ensure we set an empty array if data is null/undefined
         setLoadingRoles(false);
+        // Clear any errors if we successfully loaded data
+        setError('');
       })
       .catch(error => {
         console.error("Error fetching detailed popular roles:", error);
@@ -190,6 +215,8 @@ function Home() {
         console.log("Fetched detailed popular skills:", data);
         setPopularSkills(data || []); // Ensure we set an empty array if data is null/undefined
         setLoadingSkills(false);
+        // Clear any errors if we successfully loaded data
+        setError('');
       })
       .catch(error => {
         console.error("Error fetching detailed popular skills:", error);
@@ -218,12 +245,19 @@ function Home() {
         }));
         setPopularRoles(formattedData || []);
         setLoadingRoles(false);
+        // Clear any errors if we successfully loaded data
+        if (formattedData && formattedData.length > 0) {
+          setError('');
+        }
       })
       .catch(error => {
         console.error("Error fetching popular roles:", error);
         setPopularRoles([]);
         setLoadingRoles(false);
-        setError("Could not find roles for the selected industry.");
+        // Only set this error if we couldn't load any other data
+        if (!popularSkills.length && !industryMetrics && !industryData) {
+          setError("Could not find roles for the selected industry.");
+        }
       });
   };
 
@@ -246,19 +280,26 @@ function Home() {
         }));
         setPopularSkills(formattedData || []);
         setLoadingSkills(false);
+        // Clear any errors if we successfully loaded data
+        if (formattedData && formattedData.length > 0) {
+          setError('');
+        }
       })
       .catch(error => {
         console.error("Error fetching popular skills:", error);
         setPopularSkills([]);
         setLoadingSkills(false);
-        setError("Could not find skills for the selected industry.");
+        // Only set this error if we couldn't load any other data
+        if (!popularRoles.length && !industryMetrics && !industryData) {
+          setError("Could not find skills for the selected industry.");
+        }
       });
   };
 
   const handleIndustrySelect = (industryName) => {
     console.log(`Industry selected: ${industryName}`);
     setSelectedIndustry(industryName);
-    setError('');
+    setError(''); // Clear any errors when user selects a new industry
   };
 
   return (
@@ -301,7 +342,7 @@ function Home() {
                   </div>
                   <div className="metric-card">
                     <h3>Average Salary</h3>
-                    <p className="metric-value">{industryMetrics?.average_salary || 'N/A'}</p>
+                    <p className="metric-value">{formatSalary(industryMetrics?.average_salary)}</p>
                   </div>
                 </div>
 

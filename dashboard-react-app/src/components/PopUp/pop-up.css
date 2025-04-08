@@ -1,32 +1,138 @@
 .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .popup-content {
-    background: white;
-    padding: 50px;
-    border-radius: 8px;
-    width: 300px;
-    text-align: center;
-  }
-  
-  button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  button:hover {
-    background-color: #0056b3;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+  position: relative;
+  /* Remove any bottom margin or padding that could add space */
+  margin-bottom: 0;
+  padding-bottom: 20px;
+}
+
+/* Remove any ::after content that adds space */
+.popup-content::after {
+  display: none !important;
+}
+
+.popup-title {
+  font-size: 1.2rem;
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.popup-section {
+  margin-bottom: 12px;
+}
+
+.popup-section h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  margin-top: 12px;
+  text-align: left;
+}
+
+.popup-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.popup-details p {
+  font-size: 0.85rem;
+  margin: 5px 0;
+  text-align: left;
+}
+
+.popup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.popup-tag {
+  background-color: #f0f0f0;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  display: inline-block;
+  text-align: center;
+}
+
+.popup-list {
+  margin: 5px 0;
+  padding-left: 20px;
+  text-align: left;
+}
+
+.popup-list li {
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+  text-align: left;
+}
+
+.popup-content .loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 123, 255, 0.2);
+  border-radius: 50%;
+  border-top-color: #007bff;
+  animation: popup-spin 1s ease-in-out infinite;
+  margin: 20px auto;
+}
+
+@keyframes popup-spin {
+  to { transform: rotate(360deg); }
+}
+
+.more-skills {
+  font-size: 0.75rem;
+  color: #0056b3;
+  margin-top: 5px;
+  font-style: italic;
+  cursor: pointer;
+  text-decoration: underline;
+  text-align: left;
+}
+
+.more-skills:hover {
+  color: #007bff;
+}
+
+/* Button styling with !important to override any global styles */
+.popup-content button {
+  background-color: #007bff !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  margin-top: 20px !important; 
+  margin-bottom: 0 !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  position: static !important; /* Change from relative to static */
+}
+
+.popup-content button:hover {
+  background-color: #0056b3 !important;
+}
