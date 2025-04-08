@@ -1,29 +1,164 @@
+/* Home page styles */
 p, h2 {
-  text-align: center
+  text-align: center;
 }
 
-.selected-industry {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  border-left: 4px solid #4a6fa5;
+/* Section styling */
+.industry-selection-section,
+.industry-overview-section,
+.data-section,
+.welcome-section,
+.companies-section {
+  background-color: #f2f2f2;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Industry header styling */
+.industry-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .industry-name {
   font-weight: 700;
-  color: #4a6fa5;
+  color: #6495ED;
 }
 
+/* Industry metrics cards */
+.industry-metrics {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.metric-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  min-width: 200px;
+  flex: 1;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.metric-card h3 {
+  color: #6495ED;
+  margin-top: 0;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  margin: 10px 0;
+}
+
+/* Top locations styling */
+.top-locations {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.top-locations h3 {
+  color: #6495ED;
+  margin-bottom: 15px;
+}
+
+.location-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.location-tag {
+  background-color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Data sections container for side-by-side view on larger screens */
+.data-sections-container {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .data-sections-container {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .data-section {
+    flex: 1;
+    margin: 20px 10px;
+  }
+}
+
+/* Company cards styling */
+.company-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.company-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.company-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.company-card h3 {
+  color: #6495ED;
+  margin-top: 0;
+  margin-bottom: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.company-card p {
+  margin: 10px 0;
+  text-align: left;
+}
+
+/* Loading spinner */
 .loading-spinner {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
+  height: 150px;
   font-style: italic;
   color: #666;
 }
 
+/* Messages */
 .no-selection-message {
   padding: 40px;
   text-align: center;
@@ -42,28 +177,27 @@ p, h2 {
   border-radius: 4px;
 }
 
+/* Welcome section styling */
+.welcome-section {
+  background-color: #f9f9f9;
+  padding: 40px;
+  text-align: center;
+}
+
+.welcome-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.welcome-section p {
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto 30px;
+}
+
+/* Industry quick select buttons */
 .industry-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 20px 0;
-}
-
-.industry-button {
-  padding: 8px 16px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.industry-button:hover {
-  background-color: #e0e0e0;
-}
-
-.industry-button.selected {
-  background-color: #4a6fa5;
-  color: white;
-  border-color: #3a5a8a;
 }

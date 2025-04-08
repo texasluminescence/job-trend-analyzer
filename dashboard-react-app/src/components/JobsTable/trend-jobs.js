@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import '../TaskBar/task-bar.css';
+import '../shared/table-styles.css'; // Using shared CSS
 import PopUp from '../PopUp/pop-up';
-import './trend-jobs.css';
 
 const JobsTable = ({ roles = [], loading = false }) => {
   const [isPopUpOpen, setIsPopUpOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobDetails, setJobDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Debug log to see what's happening
+  useEffect(() => {
+    console.log("JobsTable updated. Roles:", roles, "Loading:", loading);
+  }, [roles, loading]);
 
   // Open the modal and fetch detailed job data
   const openPopUp = async (jobData) => {
@@ -48,10 +52,11 @@ const JobsTable = ({ roles = [], loading = false }) => {
     return <div className="loading-spinner">Loading popular roles...</div>;
   }
 
-  if (roles.length === 0 && !loading) {
+  // Only show the no selection message if roles is an empty array AND we're not loading
+  if (!loading && Array.isArray(roles) && roles.length === 0) {
     return (
       <div className="no-selection-message">
-        Please select an industry to view trending roles.
+        No roles found for this industry. Please try another industry.
       </div>
     );
   }
@@ -67,7 +72,7 @@ const JobsTable = ({ roles = [], loading = false }) => {
           </tr>
         </thead>
         <tbody>
-          {roles.map((job, index) => {
+          {Array.isArray(roles) && roles.map((job, index) => {
             // Handle both simple string array and object array from API
             const title = typeof job === 'string' ? job : (job.role_name || job.title);
             const openRoles = typeof job === 'string' ? 'N/A' : (job.roles || job.open_positions_count || 'N/A');
