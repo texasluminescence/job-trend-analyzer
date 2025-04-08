@@ -13,6 +13,22 @@ const TaskBar = () => {
         setIsLoggedIn(!!userEmail);
     }, []);
 
+    useEffect(() => {
+        const checkLoginStatus = () => {
+            const userEmail = localStorage.getItem('userEmail');
+            console.log('Storage event detected, userEmail:', userEmail);
+            setIsLoggedIn(!!userEmail);
+        };
+    
+        window.addEventListener('storage', checkLoginStatus);
+        
+        checkLoginStatus();
+        
+        return () => {
+            window.removeEventListener('storage', checkLoginStatus);
+        };
+    }, []);
+
     const handleLogout = () => {
         // Remove user email from local storage
         localStorage.removeItem('userEmail');

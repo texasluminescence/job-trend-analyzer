@@ -161,7 +161,7 @@ def add_user(user: User):
 # If it does, approve login
 # Returns true/false or also could return user information depending on implementation
 @app.post("/login/")
-def login(login_data: LoginRequest) -> bool:
+def login(login_data: LoginRequest) -> dict:
     found_user = users_collection.find_one({"email": login_data.email})
     if not found_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -183,19 +183,6 @@ def get_user(email: str):
     user["_id"] = str(user["_id"])
     
     return user
-
-@app.get("/top_jobs/")
-def get_top_jobs() -> List[str]:
-    # make a call to job model that returns most popular jobs for your industry
-    # we might store these in a DB and only refresh them with the model every 15 days
-    # returns a list of jobs
-    return ['job #1']
-
-@app.get("/top_skills/")
-def get_top_skills() -> List[str]:
-    # make a call to skill model to get top skills for industry to display
-    # returns a list of skills
-    return ['skill #1']
 
 
 @app.get("/users/")
