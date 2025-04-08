@@ -409,6 +409,23 @@
     transform: translateY(-2px);
 }
 
+.help-text {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  
+  /* You might already have this in your CSS, but make sure the text area has enough height */
+textarea {
+    min-height: 80px;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+  }
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .account-section {

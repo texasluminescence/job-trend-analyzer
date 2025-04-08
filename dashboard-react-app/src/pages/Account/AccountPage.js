@@ -67,7 +67,7 @@ const AccountPage = () => {
     };
 
     const handleIndustryChange = (e) => {
-        const value = e.target.value.split(',').map(item => item.trim());
+        const value = e.target.value;
         setFormData(prev => ({
             ...prev,
             industries: value
@@ -75,7 +75,7 @@ const AccountPage = () => {
     };
 
     const handleRoleChange = (e) => {
-        const value = e.target.value.split(',').map(item => item.trim());
+        const value = e.target.value;
         setFormData(prev => ({
             ...prev,
             interested_roles: value
@@ -108,18 +108,60 @@ const AccountPage = () => {
                     current_job: formData.current_job
                 };
             } else if (section === 'industries') {
+                let industriesArray = [];
+                
+                if (typeof formData.industries === 'string') {
+                    industriesArray = formData.industries
+                        .split(',')
+                        .map(item => item.trim())
+                        .filter(item => item);
+                } else if (Array.isArray(formData.industries)) {
+                    industriesArray = formData.industries;
+                }
+                
+                // Restoring the original nested format
                 updateData.industries = {
-                    industries: formData.industries
+                    industries: industriesArray
                 };
+                
+                // Keep track of the processed array for local state update
+                const processedIndustriesArray = [...industriesArray];
+                
+                setFormData(prev => ({
+                    ...prev,
+                    industries: processedIndustriesArray
+                }));
             } else if (section === 'roles') {
+                let rolesArray = [];
+                
+                if (typeof formData.interested_roles === 'string') {
+                    rolesArray = formData.interested_roles
+                        .split(',')
+                        .map(item => item.trim())
+                        .filter(item => item);
+                } else if (Array.isArray(formData.interested_roles)) {
+                    rolesArray = formData.interested_roles;
+                }
+                
+                // Restoring the original nested format
                 updateData.interested_roles = {
-                    interested_roles: formData.interested_roles
+                    interested_roles: rolesArray
                 };
+                
+                // Keep track of the processed array for local state update
+                const processedRolesArray = [...rolesArray];
+                
+                setFormData(prev => ({
+                    ...prev,
+                    interested_roles: processedRolesArray
+                }));
             } else if (section === 'skills') {
                 updateData.skills = {
                     skills: formData.skills
                 };
             }
+
+            console.log('Sending update data:', JSON.stringify(updateData)); // Debug log
 
             const response = await fetch('http://localhost:8000/update-user/', {
                 method: 'PUT',
@@ -130,16 +172,26 @@ const AccountPage = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update user data');
+                const errorData = await response.json();
+                console.error('API error response:', errorData); // Debug log
+                throw new Error(`Failed to update user data: ${JSON.stringify(errorData)}`);
             }
 
-            // Update userData with the new values
-            setUserData(formData);
+            // After successful update, refresh the user data
+            const refreshResponse = await fetch(`http://localhost:8000/user/?email=${userData.email}`);
+            if (!refreshResponse.ok) {
+                throw new Error('Failed to refresh user data');
+            }
+            
+            const refreshedData = await refreshResponse.json();
+            setUserData(refreshedData);
+            setFormData(refreshedData);
+            
             toggleEditMode(section);
 
         } catch (err) {
             console.error('Error updating user data:', err);
-            alert('Failed to save changes. Please try again.');
+            alert(`Failed to save changes: ${err.message}`);
         }
     };
 
@@ -332,9 +384,12 @@ const AccountPage = () => {
                             <div className="info-content">
                                 <div className="info-item">
                                     <div className="tag-container">
-                                        {userData?.industries?.map((industry, index) => (
-                                            <span key={index} className="tag">{industry}</span>
-                                        )) || <span className="no-data">No industries specified</span>}
+                                        {Array.isArray(userData?.industries) && userData.industries.length > 0 
+                                            ? userData.industries.map((industry, index) => (
+                                                <span key={index} className="tag">{industry}</span>
+                                            ))
+                                            : <span className="no-data">No industries specified</span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -344,10 +399,13 @@ const AccountPage = () => {
                                     <label>Industries (comma-separated)</label>
                                     <textarea
                                         name="industries"
-                                        value={Array.isArray(formData.industries) ? formData.industries.join(', ') : ''}
+                                        value={Array.isArray(formData.industries) 
+                                            ? formData.industries.join(', ') 
+                                            : formData.industries || ''}
                                         onChange={handleIndustryChange}
-                                        placeholder="Tech, Finance, Healthcare, etc."
+                                        placeholder="Tech, Healthcare, Financial Services, etc."
                                     ></textarea>
+                                    <p className="help-text">Enter multiple industries separated by commas (e.g., "Artificial Intelligence, Cloud Computing, Finance")</p>
                                 </div>
                                 <button 
                                     className="save-button" 
@@ -374,9 +432,12 @@ const AccountPage = () => {
                             <div className="info-content">
                                 <div className="info-item">
                                     <div className="tag-container">
-                                        {userData?.interested_roles?.map((role, index) => (
-                                            <span key={index} className="tag role-tag">{role}</span>
-                                        )) || <span className="no-data">No roles specified</span>}
+                                        {Array.isArray(userData?.interested_roles) && userData.interested_roles.length > 0 
+                                            ? userData.interested_roles.map((role, index) => (
+                                                <span key={index} className="tag role-tag">{role}</span>
+                                            ))
+                                            : <span className="no-data">No roles specified</span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -386,10 +447,13 @@ const AccountPage = () => {
                                     <label>Roles (comma-separated)</label>
                                     <textarea
                                         name="interested_roles"
-                                        value={Array.isArray(formData.interested_roles) ? formData.interested_roles.join(', ') : ''}
+                                        value={Array.isArray(formData.interested_roles) 
+                                            ? formData.interested_roles.join(', ') 
+                                            : formData.interested_roles || ''}
                                         onChange={handleRoleChange}
-                                        placeholder="Software Engineer, Data Scientist, etc."
+                                        placeholder="Software Engineer, Data Scientist, Product Manager, etc."
                                     ></textarea>
+                                    <p className="help-text">Enter multiple roles separated by commas (e.g., "Machine Learning Engineer, Full Stack Developer")</p>
                                 </div>
                                 <button 
                                     className="save-button" 
@@ -416,9 +480,12 @@ const AccountPage = () => {
                             <div className="info-content">
                                 <div className="info-item">
                                     <div className="skills-tag-container">
-                                        {Object.entries(userData?.skills || {}).map(([skill, level], index) => (
-                                            <span key={index} className="compact-skill-tag">{skill} <span className="skill-level">({level})</span></span>
-                                        )) || <span className="no-data">No skills added</span>}
+                                        {userData?.skills && typeof userData.skills === 'object' && Object.keys(userData.skills).length > 0 
+                                            ? Object.entries(userData.skills).map(([skill, level], index) => (
+                                                <span key={index} className="compact-skill-tag">{skill} <span className="skill-level">({level})</span></span>
+                                            ))
+                                            : <span className="no-data">No skills added</span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -466,24 +533,27 @@ const AccountPage = () => {
                                         </button>
                                     </div>
                                     <div className="skills-tag-container">
-                                        {Object.entries(formData.skills || {}).map(([skill, level], index) => (
-                                            <div key={index} className="compact-skill-tag">
-                                                {skill}<span className="skill-level">({level})</span>
-                                                <button 
-                                                    type="button"
-                                                    className="remove-skill-btn"
-                                                    onClick={() => {
-                                                        const { [skill]: removedSkill, ...remainingSkills } = formData.skills;
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            skills: remainingSkills
-                                                        }));
-                                                    }}
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        ))}
+                                    {formData.skills && typeof formData.skills === 'object' && Object.keys(formData.skills).length > 0 
+                                            ? Object.entries(formData.skills).map(([skill, level], index) => (
+                                                <div key={index} className="compact-skill-tag">
+                                                    {skill}<span className="skill-level">({level})</span>
+                                                    <button 
+                                                        type="button"
+                                                        className="remove-skill-btn"
+                                                        onClick={() => {
+                                                            const { [skill]: removedSkill, ...remainingSkills } = formData.skills;
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                skills: remainingSkills
+                                                            }));
+                                                        }}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))
+                                            : <span className="no-data">No skills added yet</span>
+                                        }
                                     </div>
                                 </div>
                                 <button 

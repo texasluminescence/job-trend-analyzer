@@ -200,6 +200,11 @@
   align-self: flex-end;
 }
 
+.list1-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
 .list-item:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
