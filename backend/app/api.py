@@ -46,6 +46,8 @@ class User(BaseModel):
     graduation_date: str
     degree: str
     industries: list
+    interested_roles: list = [] 
+    current_job: str = ""       
     yoe: int
     skills: dict
     type_of_work: str
@@ -54,81 +56,33 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-# Routes
-@app.post("/user/")
-def add_user(user: User):
-    if users_collection.find_one({"email": user.email}):
-        raise HTTPException(status_code=400, detail="User already exists")
-    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-    user_dict = user.dict()
-    user_dict["password"] = hashed_password.decode('utf-8')
-    result = users_collection.insert_one(user_dict )
-    return {"id": str(result.inserted_id)}
+class ProfileUpdate(BaseModel):
+    education_level: str
+    graduation_date: str
+    degree: str
 
+class ExperienceUpdate(BaseModel):
+    yoe: int
+    type_of_work: str
+    current_job: Optional[str] = None  # Added current_job field
 
-# Setting up function to enable login (users credentials are input (email) verify that the encrypted password in DB matches password inputted when encrypted)
-# If it does, approve login
-# Returns true/false or also could return user information depending on implementation
-@app.post("/login/")
-def login(login_data: LoginRequest) -> bool:
-    found_user = users_collection.find_one({"email": login_data.email})
-    if not found_user:
-        raise HTTPException(status_code=404, detail="User not found")
+class IndustriesUpdate(BaseModel):
+    industries: List[str]
 
-    stored_hashed_password = found_user["password"].encode('utf-8')
-    if bcrypt.checkpw(login_data.password.encode('utf-8'), stored_hashed_password):
-        return {"login": True}
-    return {"login": False}
+class RolesUpdate(BaseModel):  # New model for interested roles
+    interested_roles: List[str]
 
-# Input is users email address, returns information about user to display on profile page/be used for ML functions
-# Uses email address to index into DB
-# returns user info
-@app.get("/user/")
-def get_user(email: str) -> User:
-    user = users_collection.find_one()
-    return user.dict()
+class SkillsUpdate(BaseModel):
+    skills: Dict[str, Any]
 
-@app.get("/top_jobs/")
-def get_top_jobs() -> List[str]:
-    # make a call to job model that returns most popular jobs for your industry
-    # we might store these in a DB and only refresh them with the model every 15 days
-    # returns a list of jobs
-    return ['job #1']
+class UserUpdateRequest(BaseModel):
+    email: str
+    profile: Optional[ProfileUpdate] = None
+    experience: Optional[ExperienceUpdate] = None
+    industries: Optional[IndustriesUpdate] = None
+    interested_roles: Optional[RolesUpdate] = None  # Added field for roles update
+    skills: Optional[SkillsUpdate] = None
 
-@app.get("/top_skills/")
-def get_top_skills() -> List[str]:
-    # make a call to skill model to get top skills for industry to display
-    # returns a list of skills
-    return ['skill #1']
-
-
-@app.get("/users/")
-def get_users():
-    users = []
-    for user in users_collection.find():
-        user["_id"] = str(user["_id"])
-        users.append(user)
-    return {"data": users}
-
-@app.get("/data")
-async def get_data():
-    df = pd.read_csv("backend/app/data/postings.csv")
-    return df.to_dict(orient="records")
-
-@app.get("/industries/{industry_name}")
-def get_industry(industry_name: str):
-    """
-    Get industry details including popular roles.
-    """
-    industry = industries_collection.find_one({"name": {"$regex": f"^{industry_name}$", "$options": "i"}})
-    
-    if not industry:
-        raise HTTPException(status_code=404, detail="Industry not found")
-
-    industry["_id"] = str(industry["_id"])
-    
-    return industry
-# Models for response validation
 class Industry(BaseModel):
     Industry: str
     Roles: List[str] = []
@@ -190,6 +144,87 @@ class IndustryMetrics(BaseModel):
     skill_count: int = 0
     average_salary: Optional[str] = None
     top_locations: List[str] = []
+
+# Routes
+@app.post("/user/")
+def add_user(user: User):
+    if users_collection.find_one({"email": user.email}):
+        raise HTTPException(status_code=400, detail="User already exists")
+    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
+    user_dict = user.dict()
+    user_dict["password"] = hashed_password.decode('utf-8')
+    result = users_collection.insert_one(user_dict )
+    return {"id": str(result.inserted_id)}
+
+
+# Setting up function to enable login (users credentials are input (email) verify that the encrypted password in DB matches password inputted when encrypted)
+# If it does, approve login
+# Returns true/false or also could return user information depending on implementation
+@app.post("/login/")
+def login(login_data: LoginRequest) -> bool:
+    found_user = users_collection.find_one({"email": login_data.email})
+    if not found_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    stored_hashed_password = found_user["password"].encode('utf-8')
+    if bcrypt.checkpw(login_data.password.encode('utf-8'), stored_hashed_password):
+        return {"login": True}
+    return {"login": False}
+
+# Input is users email address, returns information about user to display on profile page/be used for ML functions
+# Uses email address to index into DB
+# returns user info
+@app.get("/user/")
+def get_user(email: str):
+    user = users_collection.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    user["_id"] = str(user["_id"])
+    
+    return user
+
+@app.get("/top_jobs/")
+def get_top_jobs() -> List[str]:
+    # make a call to job model that returns most popular jobs for your industry
+    # we might store these in a DB and only refresh them with the model every 15 days
+    # returns a list of jobs
+    return ['job #1']
+
+@app.get("/top_skills/")
+def get_top_skills() -> List[str]:
+    # make a call to skill model to get top skills for industry to display
+    # returns a list of skills
+    return ['skill #1']
+
+
+@app.get("/users/")
+def get_users():
+    users = []
+    for user in users_collection.find():
+        user["_id"] = str(user["_id"])
+        users.append(user)
+    return {"data": users}
+
+@app.get("/data")
+async def get_data():
+    df = pd.read_csv("backend/app/data/postings.csv")
+    return df.to_dict(orient="records")
+
+@app.get("/industries/{industry_name}")
+def get_industry(industry_name: str):
+    """
+    Get industry details including popular roles.
+    """
+    industry = industries_collection.find_one({"name": {"$regex": f"^{industry_name}$", "$options": "i"}})
+    
+    if not industry:
+        raise HTTPException(status_code=404, detail="Industry not found")
+
+    industry["_id"] = str(industry["_id"])
+    
+    return industry
+
 
 @app.get("/")
 def read_root():
@@ -678,3 +713,318 @@ def get_job_postings_by_skills(
         return JSONResponse(
             status_code=500,
             content={"error": f"Server error: {str(e)}"})
+    
+
+@app.put("/update-user/")
+def update_user(update_data: UserUpdateRequest):
+    """
+    Update specific sections of a user's profile
+    """
+    # Find the user by email
+    user = users_collection.find_one({"email": update_data.email})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prepare the update document
+    update_fields = {}
+    
+    # Update profile fields if provided
+    if update_data.profile:
+        update_fields.update({
+            "education_level": update_data.profile.education_level,
+            "graduation_date": update_data.profile.graduation_date,
+            "degree": update_data.profile.degree
+        })
+    
+    # Update experience fields if provided
+    if update_data.experience:
+        update_fields.update({
+            "yoe": update_data.experience.yoe,
+            "type_of_work": update_data.experience.type_of_work
+        })
+        # Only update current_job if it's provided
+        if update_data.experience.current_job is not None:
+            update_fields["current_job"] = update_data.experience.current_job
+    
+    # Update industries if provided
+    if update_data.industries:
+        update_fields.update({
+            "industries": update_data.industries.industries
+        })
+    
+    # Update interested roles if provided
+    if update_data.interested_roles:
+        update_fields.update({
+            "interested_roles": update_data.interested_roles.interested_roles
+        })
+    
+    # Update skills if provided
+    if update_data.skills:
+        update_fields.update({
+            "skills": update_data.skills.skills
+        })
+    
+    # Only perform update if there are fields to update
+    if update_fields:
+        result = users_collection.update_one(
+            {"email": update_data.email},
+            {"$set": update_fields}
+        )
+        
+        if result.modified_count == 0:
+            # The document wasn't modified (possibly because the values were the same)
+            return {"updated": False, "message": "No changes were made"}
+        
+        return {"updated": True, "message": "User information updated successfully"}
+    
+    return {"updated": False, "message": "No valid update fields provided"}
+
+@app.get("/suggested-skills")
+def get_suggested_skills(
+    email: str = Query(..., description="User email to identify the profile"),
+    limit: int = Query(10, description="Number of suggestions to return")
+):
+    """
+    Get personalized skill suggestions for a user based on:
+    1. Industry they're interested in
+    2. Roles they're interested in
+    3. Skills they already have
+    
+    Returns a ranked list of skills they might want to learn
+    """
+    try:
+        # Find the user by email
+        user = users_collection.find_one({"email": email})
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Extract user information
+        user_industries = user.get("industries", [])
+        user_roles = user.get("interested_roles", [])
+        user_current_skills = set()
+        
+        # Extract skills from the user profile
+        skills_dict = user.get("skills", {})
+        for skill_category, skills in skills_dict.items():
+            if isinstance(skills, list):
+                user_current_skills.update(skills)
+            elif isinstance(skills, dict):
+                for skill_name, skill_level in skills.items():
+                    if skill_name != "None" and skill_name:
+                        user_current_skills.add(skill_name)
+        
+        # Store current skills in a set for quick lookup
+        user_current_skills = {skill.lower() for skill in user_current_skills if skill}
+        
+        print(f"User current skills: {user_current_skills}")
+        print(f"User industries: {user_industries}")
+        print(f"User roles: {user_roles}")
+        
+        # 1. Collect industry-based skill recommendations
+        industry_skills = []
+        for industry_name in user_industries:
+            industry = industries_collection.find_one({"Industry": {"$regex": f"^{industry_name}$", "$options": "i"}})
+            if industry and "Popular_skills" in industry:
+                industry_skills.extend(industry.get("Popular_skills", []))
+        
+        # 2. Collect role-based skill recommendations
+        role_skills = []
+        for role_name in user_roles:
+            role = roles_collection.find_one({"role_name": {"$regex": f"^{role_name}$", "$options": "i"}})
+            if role and "required_skills" in role:
+                role_skills.extend(role.get("required_skills", []))
+        
+        # 3. Find all skills related to the user's current skills
+        related_skills = []
+        for skill_name in user_current_skills:
+            skill_doc = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
+            if skill_doc and "related_skills" in skill_doc:
+                related_skills.extend(skill_doc.get("related_skills", []))
+        
+        # Combine all skill recommendations
+        all_recommended_skills = industry_skills + role_skills + related_skills
+        
+        # Count occurrences to rank skills
+        skill_counts = {}
+        for skill in all_recommended_skills:
+            if skill.lower() not in user_current_skills:  # Don't recommend skills the user already has
+                skill_counts[skill] = skill_counts.get(skill, 0) + 1
+        
+        # Sort skills by occurrence count (popularity)
+        sorted_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        # Format the output with ranking information
+        suggestions = []
+        for i, (skill_name, count) in enumerate(sorted_skills[:limit], 1):
+            # Get more info about the skill if available
+            skill_info = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
+            
+            suggestion = {
+                "rank": i,
+                "name": skill_name,
+                "relevance_score": count,
+                "description": skill_info.get("description", "") if skill_info else "",
+                "related_roles": skill_info.get("related_roles", [])[:3] if skill_info else [],
+                "job_postings_count": skill_info.get("job_postings_count", 0) if skill_info else 0
+            }
+            suggestions.append(suggestion)
+        
+        # If we don't have enough recommendations, add some generic popular skills
+        if len(suggestions) < limit:
+            # Get top skills from general database
+            remaining_count = limit - len(suggestions)
+            existing_recommendations = {s["name"].lower() for s in suggestions}
+            
+            # Find popular skills that aren't already recommended
+            pipeline = [
+                {"$sort": {"job_postings_count": -1}},
+                {"$limit": 50}  # Get a larger pool to filter from
+            ]
+            
+            popular_skills = list(skills_collection.aggregate(pipeline))
+            
+            for i, skill in enumerate(popular_skills):
+                skill_name = skill.get("skill_name")
+                if (skill_name and 
+                    skill_name.lower() not in user_current_skills and 
+                    skill_name.lower() not in existing_recommendations):
+                    
+                    suggestion = {
+                        "rank": len(suggestions) + 1,
+                        "name": skill_name,
+                        "relevance_score": max(1, 10 - len(suggestions)),  # Lower score for general recommendations
+                        "description": skill.get("description", ""),
+                        "related_roles": skill.get("related_roles", [])[:3],
+                        "job_postings_count": skill.get("job_postings_count", 0),
+                        "note": "Popular in many industries"
+                    }
+                    suggestions.append(suggestion)
+                    existing_recommendations.add(skill_name.lower())
+                    
+                    if len(suggestions) >= limit:
+                        break
+        
+        # If we still don't have enough, add some hardcoded common skills as a fallback
+        fallback_skills = [
+            "Python", "JavaScript", "Communication", "SQL", "Project Management",
+            "Data Analysis", "Machine Learning", "React", "Node.js", "Cloud Computing",
+            "Leadership", "Critical Thinking", "Problem-Solving"
+        ]
+        
+        for skill in fallback_skills:
+            if len(suggestions) >= limit:
+                break
+                
+            if (skill.lower() not in user_current_skills and 
+                skill.lower() not in {s["name"].lower() for s in suggestions}):
+                
+                suggestion = {
+                    "rank": len(suggestions) + 1,
+                    "name": skill,
+                    "relevance_score": 1,  # Lowest score for fallback skills
+                    "description": "Common skill in modern job market",
+                    "related_roles": [],
+                    "job_postings_count": 0,
+                    "note": "Generally valuable skill"
+                }
+                suggestions.append(suggestion)
+        
+        # Format for simple display in frontend
+        formatted_suggestions = []
+        for i, suggestion in enumerate(suggestions, 1):
+            formatted_suggestions.append({
+                "letter": str(i),  # For consistent display with current UI
+                "name": suggestion["name"],
+                "relevance_score": suggestion["relevance_score"],
+                "description": suggestion.get("description", ""),
+                "job_count": suggestion.get("job_postings_count", 0)
+            })
+        
+        return formatted_suggestions
+        
+    except Exception as e:
+        print(f"Error in suggested-skills endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating skill suggestions: {str(e)}")
+    
+# Add this endpoint to your FastAPI app (app.py)
+
+@app.get("/industry-skills-demand")
+def get_industry_skills_demand(
+    email: str = Query(..., description="User email to identify industry preferences"),
+    limit: int = Query(10, description="Number of skills to return")
+):
+    """
+    Get in-demand skills for a user's preferred industry with demand score.
+    This endpoint is designed to provide data for the personalized page bar chart.
+    """
+    try:
+        # Find the user by email to get their industry preference
+        user = users_collection.find_one({"email": email})
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user's primary industry (use first in list or default to "Tech")
+        user_industries = user.get("industries", [])
+        primary_industry = user_industries[0] if user_industries else "Tech"
+        
+        # Get industry details including popular skills
+        industry = industries_collection.find_one({"Industry": {"$regex": f"^{primary_industry}$", "$options": "i"}})
+        
+        if not industry:
+            # Fallback to Tech industry if user's industry not found
+            industry = industries_collection.find_one({"Industry": "Tech"})
+            if not industry:
+                return [{"skill": "Python", "demand": 100}, {"skill": "JavaScript", "demand": 85}]
+        
+        # Get popular skills for this industry
+        popular_skills = industry.get("Popular_skills", [])
+        
+        # If no popular skills found, return some defaults
+        if not popular_skills:
+            return [{"skill": "Python", "demand": 100}, {"skill": "JavaScript", "demand": 85}]
+        
+        # Enrich with job counts data
+        skill_demand = []
+        max_count = 0
+        
+        for skill_name in popular_skills:
+            # Find skill in skills collection to get job posting count
+            skill_doc = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
+            if skill_doc:
+                count = skill_doc.get("job_postings_count", 0)
+                if count > max_count:
+                    max_count = count
+                skill_demand.append({
+                    "skill": skill_name,
+                    "job_count": count
+                })
+        
+        # Sort by job count descending
+        skill_demand.sort(key=lambda x: x["job_count"], reverse=True)
+        
+        # Limit to requested number and calculate relative demand percentage
+        result = []
+        for item in skill_demand[:limit]:
+            # Normalize to percentage with maximum skill at 100%
+            normalized_demand = 100 if max_count == 0 else int((item["job_count"] / max_count) * 100)
+            result.append({
+                "skill": item["skill"].title(),  # Capitalize skill name
+                "demand": normalized_demand,
+                "job_count": item["job_count"]
+            })
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error in industry-skills-demand endpoint: {str(e)}")
+        # Return some default data if error occurs
+        return [
+            {"skill": "Python", "demand": 100},
+            {"skill": "JavaScript", "demand": 85},
+            {"skill": "SQL", "demand": 75},
+            {"skill": "React", "demand": 68},
+            {"skill": "AWS", "demand": 60}
+        ]

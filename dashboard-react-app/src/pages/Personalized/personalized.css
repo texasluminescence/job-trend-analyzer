@@ -1,4 +1,32 @@
-.container {
+.recommendation-note {
+  background-color: #f0f7ff;
+  border-left: 4px solid #6495ED;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border-radius: 0 4px 4px 0;
+}
+
+.recommendation-note p {
+  margin: 5px 0;
+}
+
+.update-profile-link {
+  color: #6495ED;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.update-profile-link:hover {
+  text-decoration: underline;
+}
+
+.match-prompt {
+  font-size: 0.9rem;
+}
+
+.match-prompt em {
+  color: #767676;
+}.container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -204,45 +232,154 @@
   margin: 0 0 0 -600px;
 }
 
+/* Updated Modal Styles */
 .modal-overlay {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  background-color: rgba(0, 0, 0, 0.1);
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  z-index: 1000;
   width: 100vw;
   height: 100vh;
-  left: 0;
-  top: 0;
 }
 
 .modal {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
-  width: 400px;
-  height: auto;
-  box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.1);
+  max-width: 90%;
+  max-height: 90vh;
+  width: 600px;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   text-align: center;
-  position: fixed;
+  position: relative;
   margin-bottom: 10px;
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  word-wrap: break-word;
 }
 
 .company-details {
   display: flex;
   flex-direction: column;
+  margin-bottom: 20px;
 }
 
-button {
-  margin-top: 200px;
-  padding: 10px 20px;
+.company-details p {
+  margin: 8px 0;
+  word-wrap: break-word;
+  text-align: left;
+}
+
+.job-description {
+  margin: 15px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 5px;
+  text-align: left;
+}
+
+.job-description p {
+  margin-top: 10px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.modal button {
   background-color: #6495ED;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.modal button:hover {
+  background-color: #5078c8;
+}
+
+.company-details a {
+  display: inline-block;
+  background-color: #4caf50;
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.company-details a:hover {
+  background-color: #45a049;
 }
 
 .bar-graph {
-  /* margin: 800px; */
   width: 800px;
   height: 500px;
   margin-top: -25px;
   padding-right: 50px;
+  position: relative;
+}
+
+.loading-chart, .error-chart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  font-size: 1.1rem;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.personalized-login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  text-align: center;
+  padding: 20px;
+  background-color: #f4f4f4;
+}
+
+.personalized-login-prompt h2 {
+  color: #6495ED;
+  margin-bottom: 20px;
+}
+
+.personalized-login-prompt p {
+  margin: 10px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.personalized-login-prompt a {
+  color: #6495ED;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.personalized-login-prompt a:hover {
+  text-decoration: underline;
+}
+
+.personalized-insights {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
 }
