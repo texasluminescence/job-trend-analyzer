@@ -1,77 +1,246 @@
 import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import BarChart from "./personalized-bar-graph";
 import "./personalized.css";
 
 const Personalized = () => {
+  // Always declare hooks at the top, regardless of login status
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobPostings, setJobPostings] = useState([]);
+  const [suggestedSkills, setSuggestedSkills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [skillsLoading, setSkillsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [skillsError, setSkillsError] = useState(null);
 
-  // User's skills - in a real app, you would get these from the user's profile
-  const userSkills = ["Python", "JavaScript", "Machine Learning", "Data Analytics", "Git"];
+  // Check login status
+  const isLoggedIn = !!localStorage.getItem('userEmail');
+  const userEmail = localStorage.getItem('userEmail');
 
   useEffect(() => {
-    // Fetch job postings that match the user's skills
-    const fetchJobPostings = async () => {
-      try {
-        setLoading(true);
-        
-        // Build the query string for the skills
-        const skillsQuery = userSkills.map(skill => `skills=${encodeURIComponent(skill)}`).join('&');
-        const url = `/api/job-postings-by-skills?${skillsQuery}&limit=10`;
-        
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // Add any other necessary headers like authorization if required
+    // Only fetch data if logged in
+    if (isLoggedIn) {
+      // Fetch personalized skill recommendations
+      const fetchSuggestedSkills = async () => {
+        try {
+          setSkillsLoading(true);
+          const url = `http://localhost:8000/suggested-skills?email=${encodeURIComponent(userEmail)}&limit=10`;
+          
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API request failed with status ${response.status}: ${errorText}`);
           }
-        });
-        
-        // Check if the response is ok
-        if (!response.ok) {
-          // Try to get the error text for more detailed logging
-          const errorText = await response.text();
-          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+          
+          const data = await response.json();
+          setSuggestedSkills(data);
+          setSkillsError(null);
+        } catch (err) {
+          console.error("Error fetching skill suggestions:", err);
+          setSkillsError(err.message);
+          setSuggestedSkills([]);
+        } finally {
+          setSkillsLoading(false);
         }
-        
-        // Try to parse the response as JSON
-        const data = await response.json();
-        
-        // Format the data for display
-        const formattedData = data.map((posting, index) => ({
-          letter: (index + 1).toString(),
-          ...posting // Preserve all original fields
-        }));
-        
-        setJobPostings(formattedData);
-        setError(null);
-      } catch (err) {
-        console.error("Detailed error fetching job postings:", err);
-        setError(err.message);
-        
-        // Use sample data if the API call fails - with correct field names matching the backend
-        setJobPostings([
-          {
-            letter: "1",
-            title: "Software Engineer",
-            company: "Example Corp", 
-            location: "Austin, TX",
-            description: "Example job description",
-            match_score: 85.5,
-            skills: ["Python", "JavaScript"],
-            posting_url: "https://example.com/job"
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchJobPostings();
-  }, []);
+      // Fetch job postings that match the user's skills
+      const fetchJobPostings = async () => {
+        try {
+          setLoading(true);
+          
+          // Get user data first to extract skills
+          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!userResponse.ok) {
+            throw new Error(`Failed to fetch user data: ${userResponse.status}`);
+          }
+          
+          const userData = await userResponse.json();
+          
+          // Extract user skills from their profile
+          const userSkills = [];
+          const skillsDict = userData.skills || {};
+          
+          // Handle different skill storage formats
+          Object.values(skillsDict).forEach(skillItem => {
+            if (Array.isArray(skillItem)) {
+              userSkills.push(...skillItem);
+            } else if (typeof skillItem === 'object') {
+              Object.keys(skillItem).forEach(skill => {
+                if (skill !== "None" && skill) {
+                  userSkills.push(skill);
+                }
+              });
+            }
+          });
+          
+          // Check if user has skills defined
+          if (userSkills.length === 0) {
+            // No skills found, fetch popular jobs/roles instead
+            await fetchPopularJobsWithCompanies();
+            return;
+          }
+          
+          // Build the query string for the skills
+          const skillsQuery = userSkills
+            .filter(skill => skill) // Remove empty skills
+            .map(skill => `skills=${encodeURIComponent(skill)}`)
+            .join('&');
+          
+          const url = `http://localhost:8000/job-postings-by-skills?${skillsQuery}&limit=10`;
+          
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+          }
+          
+          const data = await response.json();
+          
+          // Format the data for display
+          const formattedData = data.map((posting, index) => ({
+            letter: (index + 1).toString(),
+            ...posting
+          }));
+          
+          setJobPostings(formattedData);
+          setError(null);
+        } catch (err) {
+          console.error("Error fetching job postings:", err);
+          
+          // If error occurs, try to fetch popular jobs instead
+          try {
+            await fetchPopularJobsWithCompanies();
+          } catch (fallbackErr) {
+            console.error("Error fetching popular jobs:", fallbackErr);
+            setError("Failed to load job recommendations. Please try again later.");
+            setJobPostings([]);
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // Fetch popular jobs with actual company listings when user has no skills
+      const fetchPopularJobsWithCompanies = async () => {
+        try {
+          // Get user industry preferences
+          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const userData = await userResponse.json();
+          const userIndustries = userData.industries || [];
+          
+          let jobsData = [];
+          
+          // If user has industry preferences, fetch popular jobs for those industries
+          if (userIndustries.length > 0) {
+            // Just use the first industry for simplicity
+            const industryName = userIndustries[0];
+            
+            // First fetch detailed popular roles to get role names
+            const popularRolesUrl = `http://localhost:8000/detailed-popular-roles?industry=${encodeURIComponent(industryName)}`;
+            const rolesResponse = await fetch(popularRolesUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            if (rolesResponse.ok) {
+              const rolesData = await rolesResponse.json();
+              
+              // For each role, fetch one actual job posting
+              for (const role of rolesData) {
+                try {
+                  // Fetch a single job posting for this role
+                  const jobPostingUrl = `http://localhost:8000/job-postings?role=${encodeURIComponent(role.role_name)}&industry=${encodeURIComponent(industryName)}&limit=1`;
+                  const jobResponse = await fetch(jobPostingUrl);
+                  
+                  if (jobResponse.ok) {
+                    const jobsForRole = await jobResponse.json();
+                    
+                    if (jobsForRole && jobsForRole.length > 0) {
+                      // Add this job posting to our list
+                      const job = jobsForRole[0];
+                      jobsData.push({
+                        letter: (jobsData.length + 1).toString(),
+                        title: job.title || role.role_name,
+                        company: job.company || "Example Company",
+                        location: job.location || "Remote",
+                        description: job.description || role.description || `Popular ${role.role_name} role in the ${industryName} industry.`,
+                        industry: industryName,
+                        skills: job.skills || role.required_skills || [],
+                        match_score: 100,
+                        posting_url: job.posting_url || null,
+                        recommended: true
+                      });
+                    } else {
+                      // No actual job found, create a sample with role info but a real company
+                      jobsData.push({
+                        letter: (jobsData.length + 1).toString(),
+                        title: role.role_name,
+                        company: role.top_hiring_companies?.[0] || "Tech Leaders Inc.",
+                        location: "Multiple Locations",
+                        description: role.description || `Popular ${role.role_name} role in the ${industryName} industry.`,
+                        industry: industryName,
+                        skills: role.required_skills || [],
+                        match_score: 100,
+                        recommended: true
+                      });
+                    }
+                    
+                    // Limit to 5 roles
+                    if (jobsData.length >= 5) break;
+                  }
+                } catch (roleErr) {
+                  console.error(`Error fetching job for role ${role.role_name}:`, roleErr);
+                  // Continue with next role
+                }
+              }
+            }
+          }
+          
+          // If we couldn't get industry-specific jobs or user has no industry preferences
+          if (jobsData.length === 0) {
+            throw new Error("No industry-specific jobs found.");
+          }
+          
+          setJobPostings(jobsData);
+          setError(null);
+        } catch (fallbackErr) {
+          console.error("Error fetching popular jobs:", fallbackErr);
+          throw fallbackErr; // Let the parent function handle this error
+        }
+      };
+
+      fetchSuggestedSkills();
+      fetchJobPostings();
+    }
+  }, [isLoggedIn, userEmail]);
 
   const openModal = (job) => {
     setSelectedJob(job);
@@ -82,30 +251,16 @@ const Personalized = () => {
     setModalOpen(false);
   };
 
-  // Skills recommendations - in a real app, these would come from another API endpoint
-  const recommendedSkills = [
-    { letter: "1", name: "Python" },
-    { letter: "2", name: "Java" },
-    { letter: "3", name: "Machine Learning" },
-    { letter: "4", name: "Data Analytics" },
-    { letter: "5", name: "C++" },
-    { letter: "6", name: "JavaScript" },
-    { letter: "7", name: "Git" },
-    { letter: "8", name: "Research" },
-    { letter: "9", name: "UI design" },
-    { letter: "10", name: "HTML/CSS" },
-  ];
-
-  // Format date function
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
-    } catch (e) {
-      return dateString;
-    }
-  };
+  // If not logged in, show login prompt
+  if (!isLoggedIn) {
+    return (
+      <div className="personalized-login-prompt">
+        <h2>Personalized Insights</h2>
+        <p>Please <Link to="/login">login</Link> to view your personalized job insights.</p>
+        <p>Don't have an account? <Link to="/signup">Sign up</Link> now!</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -116,12 +271,20 @@ const Personalized = () => {
       <p className="para2">Popular skills you may want to learn</p>
       <div className="list-bar">
         <ul className="list">
-          {recommendedSkills.map((skill, index) => (
-            <li className="list-item" key={index}>
-              <div className="circle">{skill.letter}</div>
-              <span className="text">{skill.name}</span>
-            </li>
-          ))}
+          {skillsLoading ? (
+            <li className="list-item">Loading skill suggestions...</li>
+          ) : skillsError ? (
+            <li className="list-item">Error loading skills: {skillsError}</li>
+          ) : suggestedSkills.length === 0 ? (
+            <li className="list-item">No skill suggestions found. Try updating your profile.</li>
+          ) : (
+            suggestedSkills.map((skill, index) => (
+              <li className="list-item" key={index}>
+                <div className="circle">{skill.letter}</div>
+                <span className="text">{skill.name ? skill.name.charAt(0).toUpperCase() + skill.name.slice(1) : ''}</span>
+              </li>
+            ))
+          )}
         </ul>
         <div>
           <BarChart />
@@ -133,66 +296,74 @@ const Personalized = () => {
       {loading ? (
         <p>Loading job recommendations...</p>
       ) : error ? (
-        <div>
-          <p>Error loading jobs: {error}</p>
-          <p>Showing sample job data</p>
-        </div>
+        <p>Error loading job recommendations: {error}</p>
+      ) : jobPostings.length === 0 ? (
+        <p>No job recommendations found. Try updating your profile with more skills.</p>
       ) : (
-        <ul className="list1">
-          {jobPostings.map((job, index) => (
-            <li
-              className="list1-item"
-              key={index}
-              onClick={() => openModal(job)}
-            >
-              <div className="circle1">{job.letter}</div>
-              <span className="text1">{job.company} - {job.title || job.role}</span>
-            </li>
-          ))}
-        </ul>
+        <>
+          {jobPostings.some(job => job.recommended) && (
+            <div className="recommendation-note">
+              <p>Showing popular job roles based on industry trends.</p>
+              <p>To receive more personalized job recommendations and match percentages, 
+                <Link to="/account" className="update-profile-link"> update your profile with your skills</Link>.
+              </p>
+            </div>
+          )}
+          <ul className="list1">
+            {jobPostings.map((job, index) => (
+              <li
+                className="list1-item"
+                key={index}
+                onClick={() => openModal(job)}
+              >
+                <div className="circle1">{job.letter}</div>
+                <span className="text1">{job.company} - {(job.title || job.role) ? (job.title || job.role).charAt(0).toUpperCase() + (job.title || job.role).slice(1) : ''}</span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       
       {modalOpen && selectedJob && (
         <div className="modal-overlay">
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{selectedJob.company}</h2>
+            <h2>{(selectedJob.title || selectedJob.role) ? (selectedJob.title || selectedJob.role).charAt(0).toUpperCase() + (selectedJob.title || selectedJob.role).slice(1) : ''}</h2>
 
             <div className="company-details">
               <p>
-                <strong>Job: </strong> {selectedJob.title || selectedJob.role}
+                <strong>Company: </strong> {selectedJob.company}
               </p>
               <p>
                 <strong>Location: </strong> {selectedJob.location || "Remote"}
               </p>
-              <p>
-                <strong>Industry: </strong> {selectedJob.industry || "Not specified"}
-              </p>
-              <p>
-                <strong>Posted Date: </strong> {formatDate(selectedJob.posted_date)}
-              </p>
-              {selectedJob.salary_range && (
-                <p>
-                  <strong>Salary Range: </strong> {selectedJob.salary_range}
-                </p>
-              )}
-              <p>
-                <strong>Match Score: </strong> {Math.round(selectedJob.match_score || 0)}%
-              </p>
-              {selectedJob.matching_skills_count !== undefined && (
-                <p>
-                  <strong>Matching Skills: </strong> {selectedJob.matching_skills_count} out of {selectedJob.total_skills_count || 0}
-                </p>
-              )}
+              
+              <div className="job-description">
+                <strong>Description: </strong>
+                <p>{selectedJob.description || "No description available"}</p>
+              </div>
+              
               {selectedJob.skills && selectedJob.skills.length > 0 && (
                 <p>
-                  <strong>Required Skills: </strong>
-                  {selectedJob.skills.join(", ")}
+                  <strong>Key Skills: </strong>
+                  {selectedJob.skills.slice(0, 3).map(skill => 
+                    skill ? skill.charAt(0).toUpperCase() + skill.slice(1) : ''
+                  ).join(", ")}
+                  {selectedJob.skills.length > 3 && " and more"}
                 </p>
               )}
-              <p>
-                <strong>Description: </strong>
-                <br /> {selectedJob.description || "No description available"}
-              </p>
+
+              {selectedJob.match_score && !selectedJob.recommended && (
+                <p>
+                  <strong>Match: </strong> {Math.round(selectedJob.match_score)}%
+                </p>
+              )}
+              
+              {selectedJob.recommended && (
+                <p className="match-prompt">
+                  <strong>Match: </strong> <em>Add skills to your profile to see match percentage</em>
+                </p>
+              )}
+              
               {selectedJob.posting_url && (
                 <p>
                   <a href={selectedJob.posting_url} target="_blank" rel="noopener noreferrer">
