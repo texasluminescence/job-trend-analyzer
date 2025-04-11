@@ -13,6 +13,7 @@ const Personalized = () => {
   const [skillsLoading, setSkillsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [skillsError, setSkillsError] = useState(null);
+  const [userSkills, setUserSkills] = useState([]);
 
   // Check login status
   const isLoggedIn = !!localStorage.getItem('userEmail');
@@ -25,7 +26,9 @@ const Personalized = () => {
       const fetchSuggestedSkills = async () => {
         try {
           setSkillsLoading(true);
-          const url = `http://localhost:8000/suggested-skills?email=${encodeURIComponent(userEmail)}&limit=10`;
+          // Add a timestamp parameter to prevent caching
+          const timestamp = new Date().getTime();
+          const url = `http://localhost:8000/suggested-skills?email=${encodeURIComponent(userEmail)}&limit=10&t=${timestamp}`;
           
           const response = await fetch(url, {
             method: 'GET',
@@ -40,7 +43,16 @@ const Personalized = () => {
           }
           
           const data = await response.json();
-          setSuggestedSkills(data);
+          
+          // Filter out skills the user already has
+          const filteredSkills = data.filter(skill => {
+            // Normalize skill name to lowercase for case-insensitive comparison
+            const skillName = skill.name.toLowerCase();
+            // Check if this skill is already in the user's skill set
+            return !userSkills.some(userSkill => userSkill.toLowerCase() === skillName);
+          });
+          
+          setSuggestedSkills(filteredSkills);
           setSkillsError(null);
         } catch (err) {
           console.error("Error fetching skill suggestions:", err);
@@ -58,7 +70,9 @@ const Personalized = () => {
           
           // Get user data first to extract skills
           console.log("Fetching user data for email:", userEmail);
-          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}`, {
+          // Add a timestamp parameter to prevent caching
+          const timestamp = new Date().getTime();
+          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}&t=${timestamp}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -84,7 +98,7 @@ const Personalized = () => {
           }
           
           // Extract user skills from their profile
-          const userSkills = [];
+          const extractedSkills = [];
           const skillsDict = userData.skills || {};
           
           console.log("Skills data structure:", JSON.stringify(skillsDict));
@@ -94,7 +108,7 @@ const Personalized = () => {
             // If skills is directly an array
             if (Array.isArray(skillsDict)) {
               skillsDict.forEach(skill => {
-                if (skill && skill !== "None") userSkills.push(skill);
+                if (skill && skill !== "None") extractedSkills.push(skill);
               });
             } else {
               // If skills is nested in categories
@@ -102,37 +116,38 @@ const Personalized = () => {
                 if (Array.isArray(skills)) {
                   // If category contains an array of skills
                   skills.forEach(skill => {
-                    if (skill && skill !== "None") userSkills.push(skill);
+                    if (skill && skill !== "None") extractedSkills.push(skill);
                   });
                 } else if (typeof skills === 'object' && skills !== null) {
                   // If category contains an object with skill names as keys
                   Object.keys(skills).forEach(skill => {
-                    if (skill !== "None" && skill) userSkills.push(skill);
+                    if (skill !== "None" && skill) extractedSkills.push(skill);
                   });
                 } else if (typeof skills === 'string' && skills && skills !== "None") {
                   // If category directly contains a skill as string
-                  userSkills.push(skills);
+                  extractedSkills.push(skills);
                 }
               });
             }
           }
           
-          console.log("Extracted skills:", userSkills);
+          console.log("Extracted skills:", extractedSkills);
+          setUserSkills(extractedSkills);
           
           // If user has no skills, fetch popular jobs instead
-          if (userSkills.length === 0) {
+          if (extractedSkills.length === 0) {
             console.log("No skills found, fetching popular jobs instead");
             await fetchPopularJobsWithCompanies();
             return;
           }
           
           // Build the query string for the skills
-          const skillsQuery = userSkills
+          const skillsQuery = extractedSkills
             .filter(skill => skill) // Remove empty skills
             .map(skill => `skills=${encodeURIComponent(skill)}`)
             .join('&');
           
-          const url = `http://localhost:8000/job-postings-by-skills?${skillsQuery}&limit=10`;
+          const url = `http://localhost:8000/job-postings-by-skills?${skillsQuery}&limit=10&t=${timestamp}`;
           
           console.log("Fetching job postings from:", url);
           
@@ -164,14 +179,35 @@ const Personalized = () => {
             return;
           }
           
+          // Filter for postings from the last year
+          const currentDate = new Date();
+          const oneYearAgo = new Date();
+          oneYearAgo.setFullYear(currentDate.getFullYear() - 1);
+          
+          const filteredData = data.filter(posting => {
+            // Check if posting has date field
+            if (!posting.date_posted && !posting.posted_date) {
+              return true; // Include if no date available (default behavior)
+            }
+            
+            // Parse the date (handle different possible field names)
+            const postingDate = new Date(posting.date_posted || posting.posted_date);
+            
+            // Only include if date is valid and within the last year
+            return !isNaN(postingDate.getTime()) && postingDate >= oneYearAgo;
+          });
+          
           // Format the data for display
-          const formattedData = data.map((posting, index) => ({
+          const formattedData = filteredData.map((posting, index) => ({
             letter: (index + 1).toString(),
-            ...posting
+            ...posting,
+            match_score: posting.match_score !== undefined ? Number(posting.match_score) : null,
+            description: posting.description || `${posting.title || "Job"} at ${posting.company || "Company"}`,
+            recommended: true // Mark as recommended since these are matched jobs
           }));
           
           setJobPostings(formattedData);
-          setError(null);
+          setError(formattedData.length === 0 ? "No recent job postings found. Try updating your profile." : null);
         } catch (err) {
           console.error("Error in primary job fetching:", err);
           
@@ -193,7 +229,8 @@ const Personalized = () => {
       const fetchPopularJobsWithCompanies = async () => {
         try {
           // Get user industry preferences
-          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}`, {
+          const timestamp = new Date().getTime();
+          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}&t=${timestamp}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -225,7 +262,7 @@ const Personalized = () => {
           console.log("Fetching roles for industry:", industryName);
           
           // First fetch detailed popular roles to get role names
-          const popularRolesUrl = `http://localhost:8000/detailed-popular-roles?industry=${encodeURIComponent(industryName)}`;
+          const popularRolesUrl = `http://localhost:8000/detailed-popular-roles?industry=${encodeURIComponent(industryName)}&t=${timestamp}`;
           const rolesResponse = await fetch(popularRolesUrl, {
             method: 'GET',
             headers: {
@@ -259,7 +296,7 @@ const Personalized = () => {
               let job = null;
               
               try {
-                const jobPostingUrl = `http://localhost:8000/job-postings?role=${encodeURIComponent(role.role_name)}&industry=${encodeURIComponent(industryName)}&limit=1`;
+                const jobPostingUrl = `http://localhost:8000/job-postings?role=${encodeURIComponent(role.role_name)}&industry=${encodeURIComponent(industryName)}&limit=1&t=${timestamp}`;
                 console.log("Fetching job from:", jobPostingUrl);
                 
                 const jobResponse = await fetch(jobPostingUrl);
@@ -277,19 +314,36 @@ const Personalized = () => {
                 // Continue with role data only
               }
               
-              // Use job posting if found, otherwise use role data
-              if (job) {
+              // Filter for jobs from the last year
+              const currentDate = new Date();
+              const oneYearAgo = new Date();
+              oneYearAgo.setFullYear(currentDate.getFullYear() - 1);
+              
+              // Check if job posting is from within the last year
+              const isRecentJob = (job) => {
+                if (!job || (!job.date_posted && !job.posted_date)) {
+                  return true; // Include if no date available
+                }
+                
+                const postingDate = new Date(job.date_posted || job.posted_date);
+                return !isNaN(postingDate.getTime()) && postingDate >= oneYearAgo;
+              };
+              
+              // Use job posting if found and recent, otherwise use role data
+              if (job && isRecentJob(job)) {
                 jobsData.push({
                   letter: (jobsData.length + 1).toString(),
                   title: job.title || role.role_name,
                   company: job.company || "Various Companies",
                   location: job.location || "Remote",
-                  description: job.description || role.description || `Popular ${role.role_name} role in the ${industryName} industry.`,
+                  description: job.description || role.description || 
+                             `This is a popular ${role.role_name} role in the ${industryName} industry.`,
                   industry: industryName,
                   skills: job.skills || role.required_skills || [],
-                  match_score: 100,
+                  recommended: false, // Mark as not specifically recommended based on skills
+                  match_score: null,
                   posting_url: job.posting_url || null,
-                  recommended: true
+                  date_posted: job.date_posted || job.posted_date || new Date().toISOString()
                 });
               } else {
                 // Create entry with role info only
@@ -298,11 +352,13 @@ const Personalized = () => {
                   title: role.role_name,
                   company: role.top_hiring_companies?.[0] || "Various Companies",
                   location: "Multiple Locations",
-                  description: role.description || `Popular ${role.role_name} role in the ${industryName} industry.`,
+                  description: role.description || 
+                             `This ${role.role_name} position is in high demand in the ${industryName} industry.`,
                   industry: industryName,
                   skills: role.required_skills || [],
-                  match_score: 100,
-                  recommended: true
+                  recommended: false, // Mark as not specifically recommended based on skills
+                  match_score: null,
+                  date_posted: new Date().toISOString()
                 });
               }
               
@@ -332,8 +388,73 @@ const Personalized = () => {
         }
       };
 
-      fetchSuggestedSkills();
-      fetchJobPostings();
+      // First fetch user skills, then fetch suggested skills
+      const fetchUserProfileAndData = async () => {
+        try {
+          // Get user data first to extract skills
+          console.log("Fetching user data for email:", userEmail);
+          const timestamp = new Date().getTime();
+          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}&t=${timestamp}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!userResponse.ok) {
+            console.error("User data fetch failed with status:", userResponse.status);
+            throw new Error(`Failed to fetch user data: ${userResponse.status}`);
+          }
+          
+          const userData = await userResponse.json();
+          
+          // Extract user skills from their profile
+          const extractedSkills = [];
+          const skillsDict = userData.skills || {};
+          
+          // Extract skills based on the actual structure
+          if (typeof skillsDict === 'object') {
+            // If skills is directly an array
+            if (Array.isArray(skillsDict)) {
+              skillsDict.forEach(skill => {
+                if (skill && skill !== "None") extractedSkills.push(skill);
+              });
+            } else {
+              // If skills is nested in categories
+              Object.entries(skillsDict).forEach(([category, skills]) => {
+                if (Array.isArray(skills)) {
+                  // If category contains an array of skills
+                  skills.forEach(skill => {
+                    if (skill && skill !== "None") extractedSkills.push(skill);
+                  });
+                } else if (typeof skills === 'object' && skills !== null) {
+                  // If category contains an object with skill names as keys
+                  Object.keys(skills).forEach(skill => {
+                    if (skill !== "None" && skill) extractedSkills.push(skill);
+                  });
+                } else if (typeof skills === 'string' && skills && skills !== "None") {
+                  // If category directly contains a skill as string
+                  extractedSkills.push(skills);
+                }
+              });
+            }
+          }
+          
+          console.log("Extracted user skills:", extractedSkills);
+          setUserSkills(extractedSkills);
+          
+          // Now fetch suggested skills and job postings
+          await fetchSuggestedSkills();
+          await fetchJobPostings();
+          
+        } catch (err) {
+          console.error("Error fetching user profile:", err);
+          setError("Error loading user profile. Please try again later.");
+          setLoading(false);
+        }
+      };
+
+      fetchUserProfileAndData();
     }
   }, [isLoggedIn, userEmail]);
 
@@ -346,7 +467,12 @@ const Personalized = () => {
     setModalOpen(false);
   };
 
-  // If not logged in, show login prompt
+  const handleApply = (url) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+  
   if (!isLoggedIn) {
     return (
       <div className="personalized-login-prompt">
@@ -371,7 +497,7 @@ const Personalized = () => {
           ) : skillsError ? (
             <li className="list-item">Error loading skills: {skillsError}</li>
           ) : suggestedSkills.length === 0 ? (
-            <li className="list-item">No skill suggestions found. Try updating your profile.</li>
+            <li className="list-item">No new skill suggestions found. You're already proficient in the key skills!</li>
           ) : (
             suggestedSkills.map((skill, index) => (
               <li className="list-item" key={index}>
@@ -406,7 +532,7 @@ const Personalized = () => {
         </div>
       ) : (
         <>
-          {jobPostings.some(job => job.recommended) && (
+          {!jobPostings.some(job => job.recommended) && (
             <div className="recommendation-note">
               <p>Showing popular job roles based on industry trends.</p>
               <p>To receive more personalized job recommendations and match percentages, 
@@ -444,7 +570,7 @@ const Personalized = () => {
               
               <div className="job-description">
                 <strong>Description: </strong>
-                <p>{selectedJob.description || "No description available"}</p>
+                <p>{selectedJob.description || `${selectedJob.title || "This position"} at ${selectedJob.company || "this company"}.`}</p>
               </div>
               
               {selectedJob.skills && selectedJob.skills.length > 0 && (
@@ -457,27 +583,28 @@ const Personalized = () => {
                 </p>
               )}
 
-              {selectedJob.match_score && !selectedJob.recommended && (
+              {(selectedJob.recommended && selectedJob.match_score !== undefined && selectedJob.match_score !== null) ? (
                 <p>
                   <strong>Match: </strong> {Math.round(selectedJob.match_score)}%
                 </p>
-              )}
-              
-              {selectedJob.recommended && (
+              ) : (
                 <p className="match-prompt">
-                  <strong>Match: </strong> <em>Add skills to your profile to see match percentage</em>
+                  <strong>Match: </strong> <em>Add more skills to your profile to see match percentage</em>
                 </p>
               )}
               
-              {selectedJob.posting_url && (
-                <p>
-                  <a href={selectedJob.posting_url} target="_blank" rel="noopener noreferrer">
+              <div className="modal-buttons">
+                {selectedJob.posting_url && (
+                  <button 
+                    className="apply-button" 
+                    onClick={() => handleApply(selectedJob.posting_url)}
+                  >
                     Apply Now
-                  </a>
-                </p>
-              )}
+                  </button>
+                )}
+                <button className="close-button" onClick={closeModal}>Close</button>
+              </div>
             </div>
-            <button onClick={closeModal}>Close</button>
           </div>
         </div>
       )}

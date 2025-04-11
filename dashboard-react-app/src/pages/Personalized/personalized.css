@@ -26,7 +26,9 @@
 
 .match-prompt em {
   color: #767676;
-}.container {
+}
+
+.container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -387,4 +389,19 @@
   margin: 0 auto;
   padding: 20px;
   text-align: center;
+}
+
+/* Modal buttons spacing */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* Space between buttons */
+}
+
+.apply-button {
+  background-color: #4caf50 !important; /* Green color for apply button */
+}
+
+.apply-button:hover {
+  background-color: #45a049 !important;
 }

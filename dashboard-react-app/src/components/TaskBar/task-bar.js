@@ -1,31 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './task-bar.css';
 import BlackCircle from '../../assets/BlackCircle.png';
 
 const TaskBar = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
+    // Check login status whenever the component renders or location changes
     useEffect(() => {
-        // Check if user is logged in by checking local storage
         const userEmail = localStorage.getItem('userEmail');
         setIsLoggedIn(!!userEmail);
-    }, []);
+        console.log('Login status checked, isLoggedIn:', !!userEmail);
+    }, [location]);
 
+    // Create a custom event listener for login/logout actions
     useEffect(() => {
-        const checkLoginStatus = () => {
+        const handleLoginStatusChange = () => {
             const userEmail = localStorage.getItem('userEmail');
-            console.log('Storage event detected, userEmail:', userEmail);
             setIsLoggedIn(!!userEmail);
+            console.log('Login status event triggered, isLoggedIn:', !!userEmail);
         };
-    
-        window.addEventListener('storage', checkLoginStatus);
+
+        // Listen for custom login/logout events
+        window.addEventListener('loginStatusChange', handleLoginStatusChange);
         
-        checkLoginStatus();
+        // Initial check
+        handleLoginStatusChange();
         
         return () => {
-            window.removeEventListener('storage', checkLoginStatus);
+            window.removeEventListener('loginStatusChange', handleLoginStatusChange);
         };
     }, []);
 
@@ -33,6 +38,10 @@ const TaskBar = () => {
         // Remove user email from local storage
         localStorage.removeItem('userEmail');
         setIsLoggedIn(false);
+        
+        // Dispatch a custom event to notify other components
+        window.dispatchEvent(new Event('loginStatusChange'));
+        
         // Redirect to home page
         navigate('/');
     };

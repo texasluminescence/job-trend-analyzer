@@ -536,6 +536,179 @@ def get_job_postings(
     
     return result
 
+@app.get("/suggested-skills")
+def get_suggested_skills(
+    email: str = Query(..., description="User email to identify the profile"),
+    limit: int = Query(10, description="Number of suggestions to return")
+):
+    """
+    Get personalized skill suggestions for a user based on:
+    1. Industry they're interested in
+    2. Roles they're interested in
+    3. Skills they already have
+    
+    Returns a ranked list of skills they might want to learn,
+    excluding skills the user already has.
+    """
+    try:
+        # Find the user by email
+        user = users_collection.find_one({"email": email})
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Extract user information
+        user_industries = user.get("industries", [])
+        user_roles = user.get("interested_roles", [])
+        
+        # Extract user's current skills (we'll filter these out from recommendations)
+        user_current_skills = set()
+        
+        # Extract skills from the user profile
+        skills_dict = user.get("skills", {})
+        for skill_category, skills in skills_dict.items():
+            if isinstance(skills, list):
+                for skill in skills:
+                    if skill and skill != "None":
+                        user_current_skills.add(skill.lower())  # Store as lowercase for case-insensitive comparison
+            elif isinstance(skills, dict):
+                for skill_name in skills.keys():
+                    if skill_name != "None" and skill_name:
+                        user_current_skills.add(skill_name.lower())
+            elif isinstance(skills, str) and skills and skills != "None":
+                user_current_skills.add(skills.lower())
+        
+        print(f"User current skills: {user_current_skills}")
+        print(f"User industries: {user_industries}")
+        print(f"User roles: {user_roles}")
+        
+        # 1. Collect industry-based skill recommendations
+        industry_skills = []
+        for industry_name in user_industries:
+            industry = industries_collection.find_one({"Industry": {"$regex": f"^{industry_name}$", "$options": "i"}})
+            if industry and "Popular_skills" in industry:
+                industry_skills.extend(industry.get("Popular_skills", []))
+        
+        # 2. Collect role-based skill recommendations
+        role_skills = []
+        for role_name in user_roles:
+            role = roles_collection.find_one({"role_name": {"$regex": f"^{role_name}$", "$options": "i"}})
+            if role and "required_skills" in role:
+                role_skills.extend(role.get("required_skills", []))
+        
+        # 3. Find all skills related to the user's current skills
+        related_skills = []
+        for skill_name in user_current_skills:
+            skill_doc = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
+            if skill_doc and "related_skills" in skill_doc:
+                related_skills.extend(skill_doc.get("related_skills", []))
+        
+        # Combine all skill recommendations
+        all_recommended_skills = industry_skills + role_skills + related_skills
+        
+        # Count occurrences to rank skills and filter out skills the user already has
+        skill_counts = {}
+        for skill in all_recommended_skills:
+            if skill and skill.lower() not in user_current_skills:  # Don't recommend skills the user already has
+                skill_counts[skill] = skill_counts.get(skill, 0) + 1
+        
+        # Sort skills by occurrence count (popularity)
+        sorted_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        # Format the output with ranking information
+        suggestions = []
+        for i, (skill_name, count) in enumerate(sorted_skills[:limit], 1):
+            # Get more info about the skill if available
+            skill_info = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
+            
+            suggestion = {
+                "rank": i,
+                "name": skill_name,
+                "relevance_score": count,
+                "description": skill_info.get("description", "") if skill_info else "",
+                "related_roles": skill_info.get("related_roles", [])[:3] if skill_info else [],
+                "job_postings_count": skill_info.get("job_postings_count", 0) if skill_info else 0
+            }
+            suggestions.append(suggestion)
+        
+        # If we don't have enough recommendations, add some generic popular skills
+        if len(suggestions) < limit:
+            # Get top skills from general database that user doesn't already have
+            remaining_count = limit - len(suggestions)
+            existing_recommendations = {s["name"].lower() for s in suggestions}
+            
+            # Find popular skills that aren't already recommended and user doesn't already have
+            pipeline = [
+                {"$sort": {"job_postings_count": -1}},
+                {"$limit": 50}  # Get a larger pool to filter from
+            ]
+            
+            popular_skills = list(skills_collection.aggregate(pipeline))
+            
+            for i, skill in enumerate(popular_skills):
+                skill_name = skill.get("skill_name")
+                if (skill_name and 
+                    skill_name.lower() not in user_current_skills and 
+                    skill_name.lower() not in existing_recommendations):
+                    
+                    suggestion = {
+                        "rank": len(suggestions) + 1,
+                        "name": skill_name,
+                        "relevance_score": max(1, 10 - len(suggestions)),  # Lower score for general recommendations
+                        "description": skill.get("description", ""),
+                        "related_roles": skill.get("related_roles", [])[:3],
+                        "job_postings_count": skill.get("job_postings_count", 0),
+                        "note": "Popular in many industries"
+                    }
+                    suggestions.append(suggestion)
+                    existing_recommendations.add(skill_name.lower())
+                    
+                    if len(suggestions) >= limit:
+                        break
+        
+        # If we still don't have enough, add some hardcoded common skills as a fallback
+        fallback_skills = [
+            "Python", "JavaScript", "Communication", "SQL", "Project Management",
+            "Data Analysis", "Machine Learning", "React", "Node.js", "Cloud Computing",
+            "Leadership", "Critical Thinking", "Problem-Solving"
+        ]
+        
+        for skill in fallback_skills:
+            if len(suggestions) >= limit:
+                break
+                
+            if (skill.lower() not in user_current_skills and 
+                skill.lower() not in {s["name"].lower() for s in suggestions}):
+                
+                suggestion = {
+                    "rank": len(suggestions) + 1,
+                    "name": skill,
+                    "relevance_score": 1,  # Lowest score for fallback skills
+                    "description": "Common skill in modern job market",
+                    "related_roles": [],
+                    "job_postings_count": 0,
+                    "note": "Generally valuable skill"
+                }
+                suggestions.append(suggestion)
+        
+        # Format for simple display in frontend
+        formatted_suggestions = []
+        for i, suggestion in enumerate(suggestions, 1):
+            formatted_suggestions.append({
+                "letter": str(i),  # For consistent display with current UI
+                "name": suggestion["name"],
+                "relevance_score": suggestion["relevance_score"],
+                "description": suggestion.get("description", ""),
+                "job_count": suggestion.get("job_postings_count", 0)
+            })
+        
+        return formatted_suggestions
+        
+    except Exception as e:
+        print(f"Error in suggested-skills endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating skill suggestions: {str(e)}")
+
+# Update the job-postings-by-skills endpoint to properly mark jobs as recommended
 @app.get("/job-postings-by-skills")
 def get_job_postings_by_skills(
     skills: List[str] = Query(..., description="User's skills to match against job postings"),
@@ -556,7 +729,6 @@ def get_job_postings_by_skills(
         print(f"Processing request with skills: {skills}, limit: {limit}")
         
         # Create a flexible regex-based query for partial and case-insensitive skill matching
-        # This will help match variations like "Machine Learning" with "ml", "machine learning", etc.
         skill_regex_queries = [
             {"skills": {"$regex": skill, "$options": "i"}} 
             for skill in skills
@@ -570,27 +742,8 @@ def get_job_postings_by_skills(
                 print("Warning: Database connection issue or collection is empty")
             
             # Get job postings that have at least one of the user's skills
-            # Use $or to match any of the skill regex patterns
             query = {"$or": skill_regex_queries}
             print(f"Executing flexible MongoDB query: {query}")
-            
-            # Print out all documents to help debug
-            all_docs = list(job_postings_collection.find())
-            print(f"Total documents in collection: {len(all_docs)}")
-            
-            # If no documents, print out a sample document to understand the schema
-            if not all_docs:
-                sample_doc_in_collection = job_postings_collection.find_one()
-                print("Sample document in collection:", sample_doc_in_collection)
-            
-            # Attempt to print out skills in existing documents
-            skills_in_docs = set()
-            for doc in all_docs:
-                doc_skills = doc.get("skills", [])
-                if isinstance(doc_skills, list):
-                    skills_in_docs.update(doc_skills)
-            
-            print("Skills found in existing documents:", list(skills_in_docs))
             
             job_postings = list(job_postings_collection.find(
                 query,
@@ -656,7 +809,8 @@ def get_job_postings_by_skills(
                     "match_score": match_score,
                     "salary_range": job.get("salary_range", "Not specified"),
                     "posting_url": job.get("url", ""),
-                    "industry": job.get("industry", "")
+                    "industry": job.get("industry", ""),
+                    "recommended": True  # Mark as recommended since these are matched based on user skills
                 }
                 
                 # Convert ObjectId to string for JSON serialization
@@ -688,7 +842,8 @@ def get_job_postings_by_skills(
                     "title": "No Matching Jobs Found",
                     "description": "Try broadening your search or checking your skills",
                     "skills": skills,
-                    "match_score": 0
+                    "match_score": 0,
+                    "recommended": False
                 }
             ]
         
@@ -766,176 +921,6 @@ def update_user(update_data: UserUpdateRequest):
         return {"updated": True, "message": "User information updated successfully"}
     
     return {"updated": False, "message": "No valid update fields provided"}
-
-@app.get("/suggested-skills")
-def get_suggested_skills(
-    email: str = Query(..., description="User email to identify the profile"),
-    limit: int = Query(10, description="Number of suggestions to return")
-):
-    """
-    Get personalized skill suggestions for a user based on:
-    1. Industry they're interested in
-    2. Roles they're interested in
-    3. Skills they already have
-    
-    Returns a ranked list of skills they might want to learn
-    """
-    try:
-        # Find the user by email
-        user = users_collection.find_one({"email": email})
-        
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        # Extract user information
-        user_industries = user.get("industries", [])
-        user_roles = user.get("interested_roles", [])
-        user_current_skills = set()
-        
-        # Extract skills from the user profile
-        skills_dict = user.get("skills", {})
-        for skill_category, skills in skills_dict.items():
-            if isinstance(skills, list):
-                user_current_skills.update(skills)
-            elif isinstance(skills, dict):
-                for skill_name, skill_level in skills.items():
-                    if skill_name != "None" and skill_name:
-                        user_current_skills.add(skill_name)
-        
-        # Store current skills in a set for quick lookup
-        user_current_skills = {skill.lower() for skill in user_current_skills if skill}
-        
-        print(f"User current skills: {user_current_skills}")
-        print(f"User industries: {user_industries}")
-        print(f"User roles: {user_roles}")
-        
-        # 1. Collect industry-based skill recommendations
-        industry_skills = []
-        for industry_name in user_industries:
-            industry = industries_collection.find_one({"Industry": {"$regex": f"^{industry_name}$", "$options": "i"}})
-            if industry and "Popular_skills" in industry:
-                industry_skills.extend(industry.get("Popular_skills", []))
-        
-        # 2. Collect role-based skill recommendations
-        role_skills = []
-        for role_name in user_roles:
-            role = roles_collection.find_one({"role_name": {"$regex": f"^{role_name}$", "$options": "i"}})
-            if role and "required_skills" in role:
-                role_skills.extend(role.get("required_skills", []))
-        
-        # 3. Find all skills related to the user's current skills
-        related_skills = []
-        for skill_name in user_current_skills:
-            skill_doc = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
-            if skill_doc and "related_skills" in skill_doc:
-                related_skills.extend(skill_doc.get("related_skills", []))
-        
-        # Combine all skill recommendations
-        all_recommended_skills = industry_skills + role_skills + related_skills
-        
-        # Count occurrences to rank skills
-        skill_counts = {}
-        for skill in all_recommended_skills:
-            if skill.lower() not in user_current_skills:  # Don't recommend skills the user already has
-                skill_counts[skill] = skill_counts.get(skill, 0) + 1
-        
-        # Sort skills by occurrence count (popularity)
-        sorted_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)
-        
-        # Format the output with ranking information
-        suggestions = []
-        for i, (skill_name, count) in enumerate(sorted_skills[:limit], 1):
-            # Get more info about the skill if available
-            skill_info = skills_collection.find_one({"skill_name": {"$regex": f"^{skill_name}$", "$options": "i"}})
-            
-            suggestion = {
-                "rank": i,
-                "name": skill_name,
-                "relevance_score": count,
-                "description": skill_info.get("description", "") if skill_info else "",
-                "related_roles": skill_info.get("related_roles", [])[:3] if skill_info else [],
-                "job_postings_count": skill_info.get("job_postings_count", 0) if skill_info else 0
-            }
-            suggestions.append(suggestion)
-        
-        # If we don't have enough recommendations, add some generic popular skills
-        if len(suggestions) < limit:
-            # Get top skills from general database
-            remaining_count = limit - len(suggestions)
-            existing_recommendations = {s["name"].lower() for s in suggestions}
-            
-            # Find popular skills that aren't already recommended
-            pipeline = [
-                {"$sort": {"job_postings_count": -1}},
-                {"$limit": 50}  # Get a larger pool to filter from
-            ]
-            
-            popular_skills = list(skills_collection.aggregate(pipeline))
-            
-            for i, skill in enumerate(popular_skills):
-                skill_name = skill.get("skill_name")
-                if (skill_name and 
-                    skill_name.lower() not in user_current_skills and 
-                    skill_name.lower() not in existing_recommendations):
-                    
-                    suggestion = {
-                        "rank": len(suggestions) + 1,
-                        "name": skill_name,
-                        "relevance_score": max(1, 10 - len(suggestions)),  # Lower score for general recommendations
-                        "description": skill.get("description", ""),
-                        "related_roles": skill.get("related_roles", [])[:3],
-                        "job_postings_count": skill.get("job_postings_count", 0),
-                        "note": "Popular in many industries"
-                    }
-                    suggestions.append(suggestion)
-                    existing_recommendations.add(skill_name.lower())
-                    
-                    if len(suggestions) >= limit:
-                        break
-        
-        # If we still don't have enough, add some hardcoded common skills as a fallback
-        fallback_skills = [
-            "Python", "JavaScript", "Communication", "SQL", "Project Management",
-            "Data Analysis", "Machine Learning", "React", "Node.js", "Cloud Computing",
-            "Leadership", "Critical Thinking", "Problem-Solving"
-        ]
-        
-        for skill in fallback_skills:
-            if len(suggestions) >= limit:
-                break
-                
-            if (skill.lower() not in user_current_skills and 
-                skill.lower() not in {s["name"].lower() for s in suggestions}):
-                
-                suggestion = {
-                    "rank": len(suggestions) + 1,
-                    "name": skill,
-                    "relevance_score": 1,  # Lowest score for fallback skills
-                    "description": "Common skill in modern job market",
-                    "related_roles": [],
-                    "job_postings_count": 0,
-                    "note": "Generally valuable skill"
-                }
-                suggestions.append(suggestion)
-        
-        # Format for simple display in frontend
-        formatted_suggestions = []
-        for i, suggestion in enumerate(suggestions, 1):
-            formatted_suggestions.append({
-                "letter": str(i),  # For consistent display with current UI
-                "name": suggestion["name"],
-                "relevance_score": suggestion["relevance_score"],
-                "description": suggestion.get("description", ""),
-                "job_count": suggestion.get("job_postings_count", 0)
-            })
-        
-        return formatted_suggestions
-        
-    except Exception as e:
-        print(f"Error in suggested-skills endpoint: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating skill suggestions: {str(e)}")
-    
-# Add this endpoint to your FastAPI app (app.py)
 
 @app.get("/industry-skills-demand")
 def get_industry_skills_demand(

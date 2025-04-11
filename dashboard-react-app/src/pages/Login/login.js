@@ -30,6 +30,9 @@ const LoginPage = () => {
                 // Store email in local storage for user identification
                 localStorage.setItem('userEmail', email);
                 
+                // Dispatch custom event to notify TaskBar of login status change
+                window.dispatchEvent(new Event('loginStatusChange'));
+                
                 // Redirect to account page or home page
                 navigate('/account');
             } else {
