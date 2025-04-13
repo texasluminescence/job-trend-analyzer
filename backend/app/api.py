@@ -249,6 +249,33 @@ def get_popular_skills(industry: str = Query(..., description="Industry to get p
     
     return industry_doc["Popular_skills"]
 
+
+
+@app.get("/highest-paid-skills", response_model=List[Dict[str, Any]])
+def get_highest_paid_skills():
+    """
+    Return the top 10 highest-paid skills based on salary analysis stored in MongoDB.
+    """
+    try:
+        # Only include skills with average_salary and a minimum number of job postings
+        pipeline = [
+            {"$match": {"average_salary": {"$exists": True}, "job_postings_count": {"$gte": 5}}},
+            {"$sort": {"average_salary": -1}},
+            {"$limit": 10}
+        ]
+
+        top_skills = list(skills_collection.aggregate(pipeline))
+
+        for skill in top_skills:
+            skill["_id"] = str(skill["_id"])
+
+        return top_skills
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving skills: {str(e)}")
+
+
+
 # New enhanced endpoints
 @app.get("/industries/{industry_name}", response_model=Dict[str, Any])
 def get_industry_details(industry_name: str):
@@ -921,6 +948,7 @@ def update_user(update_data: UserUpdateRequest):
         return {"updated": True, "message": "User information updated successfully"}
     
     return {"updated": False, "message": "No valid update fields provided"}
+
 
 @app.get("/industry-skills-demand")
 def get_industry_skills_demand(
