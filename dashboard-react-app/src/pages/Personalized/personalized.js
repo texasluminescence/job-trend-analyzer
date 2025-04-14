@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import BarChart from "./personalized-bar-graph";
 import "./personalized.css";
+import arima from '../../assets/2 Year Salary Progression Forecast.png';
 
 const Personalized = () => {
   // Always declare hooks at the top, regardless of login status
@@ -18,6 +19,9 @@ const Personalized = () => {
   // Check login status
   const isLoggedIn = !!localStorage.getItem('userEmail');
   const userEmail = localStorage.getItem('userEmail');
+
+  // flag for ARIMA
+  const [useArima, setUseArima] = useState(false);
 
   useEffect(() => {
     // Only fetch data if logged in
@@ -387,6 +391,47 @@ const Personalized = () => {
           setError("Please add industries to your profile to see job recommendations.");
         }
       };
+      
+      // Fetch user's selected job roles and check for conditional ARIMA model
+      const checkArima = async () => {
+        try {
+          // Get user data first to extract roles
+          console.log("Fetching user data for email:", userEmail);
+          const timestamp = new Date().getTime();
+          const userResponse = await fetch(`http://localhost:8000/user?email=${encodeURIComponent(userEmail)}&t=${timestamp}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!userResponse.ok) {
+            console.error("User data fetch failed with status:", userResponse.status);
+            throw new Error(`Failed to fetch user data: ${userResponse.status}`);
+          }
+          
+          const userData = await userResponse.json();
+          
+          // Extract user roles from their profile 
+          const rolesDict = userData.interested_roles || {};  
+          rolesDict.forEach(role => {
+            if (role && role === "Data Scientist") {
+              setUseArima(true); 
+            }
+          })
+
+        }
+        catch (err) {
+          console.error("Error fetching user profile:", err);
+          setError("Error loading user profile. Please try again later.");
+          setLoading(false);
+        }
+      };
+
+      checkArima(); 
+
+
+
 
       // First fetch user skills, then fetch suggested skills
       const fetchUserProfileAndData = async () => {
@@ -410,7 +455,7 @@ const Personalized = () => {
           
           // Extract user skills from their profile
           const extractedSkills = [];
-          const skillsDict = userData.skills || {};
+          const skillsDict = userData.skills || {}; 
           
           // Extract skills based on the actual structure
           if (typeof skillsDict === 'object') {
@@ -511,6 +556,24 @@ const Personalized = () => {
           <BarChart />
         </div>
       </div>
+
+    
+      {useArima && (
+        <>
+          <h1 className="ARIMA display">Data Science Salary Progression Prediction</h1>
+          <p className="para">Predicted for 2025–2027 using time-series ARIMA analysis</p>
+          <div className="ARIMA model">
+            <img
+              alt="arima"
+              src={arima}
+              width={850}
+              height={500}
+              style={{ paddingBottom: 75, display: 'block' }}
+            />
+          </div>
+        </>
+      )}
+      
       
       <h1 className="title3">Jobs For You</h1>
       
