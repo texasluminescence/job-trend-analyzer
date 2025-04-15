@@ -39,13 +39,11 @@
 }
 
 .title {
-  /* text-align: center; */
   text-align: left;
   margin-top: 50px;
   font-size: 25px;
   margin-left: 350px;
   margin: 0 0 10px 0;
-  /* margin-right: 50px; */
 }
 
 .para {
@@ -58,13 +56,11 @@
 }
 
 .title2 {
-  /* text-align: center; */
   text-align: left;
   margin-top: 50px;
   font-size: 25px;
   margin-left: 350px;
   margin: 0 0 10px 0;
-  /* margin-right: 50px; */
 }
 
 .para2 {
@@ -76,13 +72,11 @@
 }
 
 .title3 {
-  /* text-align: center; */
   text-align: left;
   margin-top: 50px;
   font-size: 25px;
   margin-left: 350px;
   margin: 0 0 10px 0;
-  /* margin-right: 50px; */
 }
 
 .list-contianer {
@@ -96,37 +90,22 @@
   margin: 0 0 10px 0;
 }
 
-.list-bar{
+.list-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 50px;
   width: 100%;
 }
+
 .list {
   list-style-type: none;
   padding: 0;
   width: 90%;
   max-width: 600px;
-  margin-top: 100px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 20px;
-  position: absolute;
-  bottom: 50px;
-  left: 50%;
-  flex-direction: column;
-  align-items: stretch;
-  position: static;
-  transform: none;
-  margin-top: 0;
-  margin-left: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  flex-wrap: wrap;
-  justify-content: space-between;
   margin-bottom: 100px;
 }
 
@@ -134,19 +113,21 @@
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Align left to match roles */
   border-radius: 10px;
   padding: 15px;
   margin-bottom: 10px;
   background-color: #F2F2F2;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
 }
 
-.list-item:nth-child(odd) {
-  align-self: flex-start;
-}
-.list-item:nth-child(even) {
-  align-self: flex-end;
+.list-item:hover {
+  background-color: rgba(100, 149, 237, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .list1-contianer {
@@ -159,57 +140,38 @@
   max-width: 1200px;
   margin: 0 0 10px 0;
 }
+
 .list1 {
   list-style-type: none;
   padding: 0;
-  width: 1310px;
-  margin-top: 100px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  position: absolute;
-  bottom: 50px;
-  left: 50%;
-  flex-direction: column;
-  align-items: stretch;
-  position: static;
-  transform: none;
-  margin-top: 0;
-  margin-left: 0;
-  display: grid;
-  gap: 40px;
-  flex-wrap: wrap;
+  width: 90%;
+  max-width: 1200px;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 100px;
 }
 
 .list1-item {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Changed to flex-start to prevent squishing */
   border-radius: 10px;
   padding: 15px;
   margin-bottom: 10px;
   background-color: #F2F2F2;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.list1-item:nth-child(odd) {
-  align-self: flex-start;
-}
-.list1-item:nth-child(even) {
-  align-self: flex-end;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .list1-item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+  background-color: rgba(100, 149, 237, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.list-item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
 .circle {
   width: 40px;
   height: 40px;
@@ -221,9 +183,10 @@
   justify-content: center;
   font-weight: bold;
   font-size: 18px;
-  position: absolute;
-  margin-right: 200px;
+  margin-right: 15px; /* Increased for better spacing */
+  flex-shrink: 0; /* Prevent shrinking */
 }
+
 .circle1 {
   width: 40px;
   height: 40px;
@@ -235,11 +198,15 @@
   justify-content: center;
   font-weight: bold;
   font-size: 18px;
-  position: absolute;
-  margin: 0 0 0 -600px;
+  margin-right: 15px; /* Increased for better spacing */
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
-/* Updated Modal Styles */
+.text1 {
+  flex: 1; /* Allow text to take available space without squishing */
+  text-align: left;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -319,18 +286,18 @@
   background-color: #5078c8;
 }
 
-.company-details a {
-  display: inline-block;
-  background-color: #4caf50;
-  color: white;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  margin-top: 10px;
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
 }
 
-.company-details a:hover {
-  background-color: #45a049;
+.apply-button {
+  background-color: #4caf50 !important;
+}
+
+.apply-button:hover {
+  background-color: #45a049 !important;
 }
 
 .bar-graph {
@@ -391,17 +358,21 @@
   text-align: center;
 }
 
-/* Modal buttons spacing */
-.modal-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 15px; /* Space between buttons */
+.hover-text {
+  display: none;
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 5;
 }
 
-.apply-button {
-  background-color: #4caf50 !important; /* Green color for apply button */
-}
-
-.apply-button:hover {
-  background-color: #45a049 !important;
+.list-item:hover .hover-text, .list1-item:hover .hover-text {
+  display: block;
 }
