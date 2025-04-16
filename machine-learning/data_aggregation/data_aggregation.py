@@ -900,11 +900,11 @@ def update_industry_collection(db, industry_name, roles_data, skills_data, role_
     
     # Calculate popular skills
     skills_count = {skill: data['job_postings_count'] for skill, data in skills_data.items()}
-    popular_skills = sorted(skills_count.items(), key=lambda x: x[1], reverse=True)[:10]
+    popular_skills = sorted(skills_count.items(), key=lambda x: x[1], reverse=True)[:20]
     
     # Calculate popular roles
     roles_count = {role: data['open_positions_count'] for role, data in roles_data.items()}
-    popular_roles = sorted(roles_count.items(), key=lambda x: x[1], reverse=True)[:5]
+    popular_roles = sorted(roles_count.items(), key=lambda x: x[1], reverse=True)[:20]
     
     # Calculate median salary for the industry
     median_salaries = []

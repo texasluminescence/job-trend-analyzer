@@ -22,6 +22,7 @@ const Personalized = () => {
   const isLoggedIn = !!localStorage.getItem('userEmail');
   const userEmail = localStorage.getItem('userEmail');
   const [useArima, setUseArima] = useState(false);
+  const [hasIndustries, setHasIndustries] = useState(true); // New state to track if user has industries
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -82,9 +83,13 @@ const Personalized = () => {
             console.log("No industries found, setting error and exiting");
             setJobPostings([]);
             setError("Please add industries to your profile to see job recommendations.");
+            setHasIndustries(false); // Set flag to indicate no industries
             setLoading(false);
             return;
           }
+          
+          // User has industries, set flag to true
+          setHasIndustries(true);
       
           const extractedSkills = [];
           const skillsDict = userData.skills || {};
@@ -205,8 +210,13 @@ const Personalized = () => {
           if (userIndustries.length === 0) {
             setJobPostings([]);
             setError("Please add industries to your profile to see job recommendations.");
+            setHasIndustries(false); // Set flag to indicate no industries
             return;
           }
+          
+          // User has industries, set flag to true
+          setHasIndustries(true);
+          
           let jobsData = [];
           const industryName = userIndustries[0];
           const popularRolesUrl = `http://localhost:8000/detailed-popular-roles?industry=${encodeURIComponent(industryName)}&t=${timestamp}`;
@@ -338,6 +348,18 @@ const Personalized = () => {
             throw new Error(`Failed to fetch user data: ${userResponse.status}`);
           }
           const userData = await userResponse.json();
+          
+          // Check if user has industries
+          const userIndustries = userData.industries || [];
+          if (userIndustries.length === 0) {
+            setHasIndustries(false);
+            setError("Please add industries to your profile to see job recommendations.");
+            setLoading(false);
+            return;
+          }
+          
+          setHasIndustries(true);
+          
           const extractedSkills = [];
           const skillsDict = userData.skills || {};
           if (typeof skillsDict === 'object') {
@@ -436,6 +458,23 @@ const Personalized = () => {
         <h2>Personalized Insights</h2>
         <p>Please <Link to="/login">login</Link> to view your personalized job insights.</p>
         <p>Don't have an account? <Link to="/signup">Sign up</Link> now!</p>
+      </div>
+    );
+  }
+
+  // If user has no industries, show a single error message for the entire page
+  if (!hasIndustries) {
+    return (
+      <div className="container">
+        <h1 className="title">Your Personalized Job Trends</h1>
+        <p className="para">Skill and role recommendations for you</p>
+        
+        <div className="recommendation-note" style={{ width: '80%', maxWidth: '800px', margin: '20px 0' }}>
+          <p>To see personalized job trends and skill recommendations, you need to update your profile.</p>
+          <p>
+            <Link to="/account" className="update-profile-link">Add industries to your profile</Link> to discover jobs and skills matching your interests.
+          </p>
+        </div>
       </div>
     );
   }

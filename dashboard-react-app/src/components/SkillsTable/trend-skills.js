@@ -8,10 +8,7 @@ const SkillsTable = ({ industry = '', loading = false, popularSkills = [] }) => 
   const [skillDetails, setSkillDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // Debug log to see what's happening
-  useEffect(() => {
-    console.log("SkillsTable updated. Industry:", industry, "Skills:", popularSkills, "Loading:", loading);
-  }, [industry, popularSkills, loading]);
+  const limitedSkills = Array.isArray(popularSkills) ? popularSkills.slice(0, 5) : [];
 
   // Open the modal and fetch detailed skill data
   const openPopUp = async (skillData) => {
@@ -53,7 +50,7 @@ const SkillsTable = ({ industry = '', loading = false, popularSkills = [] }) => 
   }
 
   // Only show the no selection message if popularSkills is an empty array AND we're not loading
-  if (!loading && Array.isArray(popularSkills) && popularSkills.length === 0) {
+  if (!loading && Array.isArray(limitedSkills) && limitedSkills.length === 0) {
     return (
       <div className="no-selection-message">
         No skills found for this industry. Please try another industry.
@@ -72,7 +69,7 @@ const SkillsTable = ({ industry = '', loading = false, popularSkills = [] }) => 
           </tr>
         </thead>
         <tbody>
-          {Array.isArray(popularSkills) && popularSkills.map((skillItem, index) => {
+          {Array.isArray(limitedSkills) && limitedSkills.map((skillItem, index) => {
             // Handle both simple string array and object array from API
             const skillName = typeof skillItem === 'string' ? skillItem : (skillItem.skill_name || skillItem.skill);
             const jobs = typeof skillItem === 'string' ? 'Various positions' : (skillItem.jobs || 'Various positions');
